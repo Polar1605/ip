@@ -2,6 +2,7 @@
  * Entry point of the Amadeus chatbot.
  * At this level the bot only greets the user and exits immediately.
  */
+import java.util.Scanner;
 public class Amadeus {
     /** Horizontal rule used to separate the chatbot's messages from the rest of the output. */
     private static final String DIVIDER = "____________________________________________________________";
@@ -24,12 +25,27 @@ public class Amadeus {
     public static void main(String[] args) {
         System.out.println(DIVIDER);
         System.out.println(BANNER);
-        System.out.println("Hello! I'm " + NAME + ".");
-        System.out.println("What can I do for you?");
+        System.out.println("I'm " + NAME + ".");
+        System.out.println("What do you want");
         System.out.println(DIVIDER);
 
         // No input is read yet, so the bot says goodbye right away and exits.
-        System.out.println("Bye. Hope to see you again soon!");
-        System.out.println(DIVIDER);
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            // scanner waits for user input
+            String input = scanner.nextLine();
+            System.out.println("____________________________________________________________");
+
+            if (input.equals("bye")) {
+                System.out.println(" Buh bye ");
+                System.out.println("____________________________________________________________");
+                break;
+            }
+
+            System.out.println(" " + input);
+            System.out.println("____________________________________________________________");
+        }
+
+        scanner.close();
     }
 }
