@@ -55,6 +55,9 @@ public class Amadeus {
 
         return taskNumber - 1;
     }
+    private static void printTask(Task task) {
+        System.out.println("    " + task);
+    }
 
     public static void main(String[] args) {
         System.out.println(DIVIDER);
@@ -63,9 +66,7 @@ public class Amadeus {
         System.out.println("Sir what do you need assistance with");
         System.out.println(DIVIDER);
 
-        // Tasks entered so far. A plain array cannot report how much of it is in
-        // use (tasks.length is always MAX_TASKS), so taskCount tracks that separately
-        // and doubles as the index of the next free slot.
+        // Tasks entered
         Task[] tasks = new Task[MAX_TASKS];
         int taskCount = 0;
 
@@ -83,11 +84,7 @@ public class Amadeus {
 
             if (input.equals("list")) {
                 System.out.println(" Here are the tasks in your list:");
-                // Slots from taskCount onwards are still null, so stop there rather
-                // than walking the whole array.
                 for (int i = 0; i < taskCount; i++) {
-                    // Tasks are numbered from 1 for the user, but stored from index 0.
-                    // Task.toString() supplies the "[X] description" part.
                     System.out.println(" " + (i + 1) + "." + tasks[i]);
                 }
                 System.out.println(DIVIDER);
@@ -102,8 +99,8 @@ public class Amadeus {
                 }
                 Task task = tasks[index];
                 task.markAsDone();
-                System.out.println(" Nice! I've marked this task as done:");
-                System.out.println("   " + task);
+                System.out.println(" Good job! I've marked this task as done:");
+                Amadeus.printTask(task);
                 System.out.println(DIVIDER);
                 continue;
             }
@@ -116,23 +113,82 @@ public class Amadeus {
                 }
                 Task task = tasks[index];
                 task.markAsNotDone();
-                System.out.println(" OK, I've marked this task as not done yet:");
-                System.out.println("   " + task);
+                System.out.println(" OK, marked as undone:");
+                Amadeus.printTask(task);
                 System.out.println(DIVIDER);
                 continue;
             }
 
             if (taskCount == MAX_TASKS) {
-                System.out.println(" My list is full, I cannot remember any more.");
+                System.out.println(" My list is full.");
                 System.out.println(DIVIDER);
                 continue;
             }
 
+            if(input.startsWith("todo")) {
+                //trim away the todo to get the description after
+                String description = input.substring("todo ".length()).trim();
+                tasks[taskCount] = new Todo(description);
+                taskCount++;
+                System.out.println(" Got it added: " + input);
+                Amadeus.printTask(tasks[taskCount - 1]);
+                System.out.println(" Now you have " + taskCount + " in your list");
+                System.out.println(DIVIDER);
+                continue;
+            }
 
-            tasks[taskCount] = new Task(input);
-            taskCount++;
-            System.out.println(" added: " + input);
-            System.out.println(DIVIDER);
+            if (input.startsWith("deadline ")) {
+                // A deadline is written as: deadline <description> /by <time>
+                int byIdx = input.indexOf("/by");
+
+                if (byIdx == -1) {
+                    System.out.println(" Sorry Sir, please use: deadline <description> /by <time>");
+                    System.out.println(DIVIDER);
+                    continue;
+                }
+
+                String description = input.substring("deadline ".length(), byIdx).trim();
+                String by = input.substring(byIdx + "/by".length()).trim();
+
+                tasks[taskCount] = new Deadline(description, by);
+                taskCount++;
+
+                System.out.println(" Got it added:");
+                // taskCount has already moved on to the next free slot, so the task
+                // just stored is at taskCount - 1.
+                Amadeus.printTask(tasks[taskCount - 1]);
+                System.out.println(" Now you have " + taskCount + " task(s) in your list");
+                System.out.println(DIVIDER);
+                continue;
+            }
+
+            if (input.startsWith("event ")) {
+                // A deadline is written as: deadline <description> /by <time>
+                int fromIdx = input.indexOf("/from");
+                int toIdx = input.indexOf("/to");
+                if (fromIdx == -1 || toIdx == -1) {
+                    System.out.println(" Sorry Sir, please use: event <description> /from <time> /to <time>");
+                    System.out.println(DIVIDER);
+                    continue;
+                }
+
+                // The description sits between the command word and "/by",
+                // and the due date is everything after "/by".
+                String description = input.substring("deadline ".length(), fromIdx).trim();
+                String from = input.substring(fromIdx + "/from".length(), toIdx).trim();
+                String to = input.substring(toIdx + "/to".length()).trim();
+
+                tasks[taskCount] = new Event(description, from, to);
+                taskCount++;
+
+                System.out.println(" Got it added:");
+                // taskCount has already moved on to the next free slot, so the task
+                // just stored is at taskCount - 1.
+                Amadeus.printTask(tasks[taskCount - 1]);
+                System.out.println(" Now you have " + taskCount + " task(s) in your list");
+                System.out.println(DIVIDER);
+                continue;
+            }
         }
 
         scanner.close();
