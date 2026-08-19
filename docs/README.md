@@ -1,6 +1,5 @@
-# Duke User Guide
+# Amadeus User Guide
 
-// Update the title above to match the actual product name
 
 // Product screenshot goes here
 
@@ -28,3 +27,8 @@ expected output
 ## Feature XYZ
 
 // Feature details
+
+
+
+AI usage:
+Claude code was used after handcoding a prototype to help improve code structure as well as catch any edge cases that I might have missed.

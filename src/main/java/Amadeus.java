@@ -1,21 +1,12 @@
-/**
- * Entry point of the Amadeus chatbot.
- * The bot greets the user, then repeatedly reads a line of input and either
- * stores it as a task, lists everything stored so far, or exits.
- * <p>
- * Understanding and validating the input is delegated to {@link Parser}; this
- * class only decides what to do once the input has been understood.
- */
-import java.util.Scanner;
+
+import java.util.*;
 public class Amadeus {
     /** Horizontal rule used to separate the chatbot's messages from the rest of the output. */
     private static final String DIVIDER = "____________________________________________________________";
 
+    private static final int MAX_TASKS = 100;
     /** Name the chatbot introduces itself with. */
     private static final String NAME = "Amadeus";
-
-    /** Largest number of tasks the bot can remember, as set by the level requirements. */
-    private static final int MAX_TASKS = 100;
 
     /**
      * ASCII-art banner shown on startup.
@@ -42,8 +33,7 @@ public class Amadeus {
         System.out.println(DIVIDER);
 
         // Tasks entered
-        Task[] tasks = new Task[MAX_TASKS];
-        int taskCount = 0;
+        List<Task> tasks = new ArrayList<>();
 
         Scanner scanner = new Scanner(System.in);
         // hasNextLine() stops the loop cleanly if the input runs out before "bye",
@@ -65,22 +55,32 @@ public class Amadeus {
                     return;
 
                 case "list":
-                    System.out.println(" Here are the " + taskCount + " task(s) in your list:");
-                    for (int i = 0; i < taskCount; i++) {
-                        System.out.println(" " + (i + 1) + "." + tasks[i]);
+                    System.out.println(" Here are the " + tasks.size() + " task(s) in your list:");
+                    for (int i = 0; i < tasks.size(); i++) {
+                        System.out.println(" " + (i + 1) + "." + tasks.get(i));
                     }
                     break;
 
                 case "mark": {
-                    Task task = tasks[Parser.parseTaskIndex(input, taskCount)];
+                    Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));
                     task.markAsDone();
                     System.out.println(" Fantastic! I've marked this task as done:");
                     printTask(task);
                     break;
                 }
 
+                case "delete": {
+                    int index = Parser.parseTaskIndex(input, tasks.size());
+                    Task tmp = tasks.get(index);
+                    tasks.remove(index);
+                    System.out.println(" Fantastic! I've removed this task:");
+                    printTask(tmp);
+                    System.out.println(" Now you have " + tasks.size() + " task(s) in your list");
+                    break;
+                }
+
                 case "unmark": {
-                    Task task = tasks[Parser.parseTaskIndex(input, taskCount)];
+                    Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));
                     task.markAsNotDone();
                     System.out.println(" OK, it has been marked as undone:");
                     printTask(task);
@@ -90,7 +90,7 @@ public class Amadeus {
                 case "todo":
                 case "deadline":
                 case "event": {
-                    if (taskCount == MAX_TASKS) {
+                    if (tasks.size() == MAX_TASKS) {
                         throw new AmadeusException("My list is full, a thousand apologies.");
                     }
 
@@ -105,12 +105,11 @@ public class Amadeus {
                         task = Parser.parseEvent(input);
                     }
 
-                    tasks[taskCount] = task;
-                    taskCount++;
+                    tasks.add(task);
 
                     System.out.println(" Got it added:");
                     printTask(task);
-                    System.out.println(" Now you have " + taskCount + " task(s) in your list");
+                    System.out.println(" Now you have " + tasks.size() + " task(s) in your list");
                     break;
                 }
 
