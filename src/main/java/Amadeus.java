@@ -2,6 +2,9 @@
  * Entry point of the Amadeus chatbot.
  * The bot greets the user, then repeatedly reads a line of input and either
  * stores it as a task, lists everything stored so far, or exits.
+ * <p>
+ * Understanding and validating the input is delegated to {@link Parser}; this
+ * class only decides what to do once the input has been understood.
  */
 import java.util.Scanner;
 public class Amadeus {
@@ -26,35 +29,7 @@ public class Amadeus {
             + "  / ___ \\ | |  | |  / ___ \\ | |_| || |___ | |_| | ___) |\n"
             + " /_/   \\_\\|_|  |_| /_/   \\_\\|____/ |_____| \\___/ |____/ ";
 
-    /**
-     * Converts the text typed after a "mark"/"unmark" command into an array index.
-     * Prints an explanation and returns -1 when the text is not a usable task number,
-     * so that the caller can simply skip the command instead of crashing.
-     *
-     * @param argument  the text following the command word, e.g. "2"
-     * @param taskCount how many tasks are currently stored
-     * @return the 0-based index of the requested task, or -1 if there isn't one
-     */
-    private static int parseTaskIndex(String argument, int taskCount) {
-        int taskNumber;
-        try {
-            taskNumber = Integer.parseInt(argument.trim());
-        } catch (NumberFormatException e) {
-            // parseInt reports bad input by throwing rather than by returning a
-            // value, so this has to be caught rather than tested with an if.
-            System.out.println(" Sorry Sir, '" + argument.trim() + "' is not a task number.");
-            return -1;
-        }
-
-        // Task numbers shown to the user start at 1 and stop at the number stored,
-        // so anything outside that range would fall off the end of the array.
-        if (taskNumber < 1 || taskNumber > taskCount) {
-            System.out.println(" Sorry Sir, I only have " + taskCount + " task(s).");
-            return -1;
-        }
-
-        return taskNumber - 1;
-    }
+    /** Prints a single task indented, the way it appears in confirmation messages. */
     private static void printTask(Task task) {
         System.out.println("    " + task);
     }
@@ -71,124 +46,85 @@ public class Amadeus {
         int taskCount = 0;
 
         Scanner scanner = new Scanner(System.in);
-        while (true) {
-            // scanner waits for user input
+        // hasNextLine() stops the loop cleanly if the input runs out before "bye",
+        // which is what happens when input is piped in from a file.
+        while (scanner.hasNextLine()) {
             String input = scanner.nextLine();
             System.out.println(DIVIDER);
 
-            if (input.equals("bye")) {
-                System.out.println(" Bye bye ");
-                System.out.println(DIVIDER);
-                break;
-            }
+            // One try/catch around the whole command covers every way the input
+            // can be wrong, so each branch below can assume its input is valid.
+            try {
+                String commandWord = Parser.parseCommandWord(input);
 
-            if (input.equals("list")) {
-                System.out.println(" Here are the tasks in your list:");
-                for (int i = 0; i < taskCount; i++) {
-                    System.out.println(" " + (i + 1) + "." + tasks[i]);
-                }
-                System.out.println(DIVIDER);
-                continue;
-            }
-
-            if (input.startsWith("mark ")) {
-                int index = parseTaskIndex(input.substring(5), taskCount);
-                if (index == -1) {
+                switch (commandWord) {
+                case "bye":
+                    System.out.println(" Buh bye ");
                     System.out.println(DIVIDER);
-                    continue;
-                }
-                Task task = tasks[index];
-                task.markAsDone();
-                System.out.println(" Good job! I've marked this task as done:");
-                Amadeus.printTask(task);
-                System.out.println(DIVIDER);
-                continue;
-            }
+                    scanner.close();
+                    return;
 
-            if (input.startsWith("unmark ")) {
-                int index = parseTaskIndex(input.substring(7), taskCount);
-                if (index == -1) {
-                    System.out.println(DIVIDER);
-                    continue;
-                }
-                Task task = tasks[index];
-                task.markAsNotDone();
-                System.out.println(" OK, marked as undone:");
-                Amadeus.printTask(task);
-                System.out.println(DIVIDER);
-                continue;
-            }
+                case "list":
+                    System.out.println(" Here are the " + taskCount + " task(s) in your list:");
+                    for (int i = 0; i < taskCount; i++) {
+                        System.out.println(" " + (i + 1) + "." + tasks[i]);
+                    }
+                    break;
 
-            if (taskCount == MAX_TASKS) {
-                System.out.println(" My list is full.");
-                System.out.println(DIVIDER);
-                continue;
-            }
-
-            if(input.startsWith("todo")) {
-                //trim away the todo to get the description after
-                String description = input.substring("todo ".length()).trim();
-                tasks[taskCount] = new Todo(description);
-                taskCount++;
-                System.out.println(" Got it added: " + input);
-                Amadeus.printTask(tasks[taskCount - 1]);
-                System.out.println(" Now you have " + taskCount + " in your list");
-                System.out.println(DIVIDER);
-                continue;
-            }
-
-            if (input.startsWith("deadline ")) {
-                // A deadline is written as: deadline <description> /by <time>
-                int byIdx = input.indexOf("/by");
-
-                if (byIdx == -1) {
-                    System.out.println(" Sorry Sir, please use: deadline <description> /by <time>");
-                    System.out.println(DIVIDER);
-                    continue;
+                case "mark": {
+                    Task task = tasks[Parser.parseTaskIndex(input, taskCount)];
+                    task.markAsDone();
+                    System.out.println(" Fantastic! I've marked this task as done:");
+                    printTask(task);
+                    break;
                 }
 
-                String description = input.substring("deadline ".length(), byIdx).trim();
-                String by = input.substring(byIdx + "/by".length()).trim();
-
-                tasks[taskCount] = new Deadline(description, by);
-                taskCount++;
-
-                System.out.println(" Got it added:");
-                // taskCount has already moved on to the next free slot, so the task
-                // just stored is at taskCount - 1.
-                Amadeus.printTask(tasks[taskCount - 1]);
-                System.out.println(" Now you have " + taskCount + " task(s) in your list");
-                System.out.println(DIVIDER);
-                continue;
-            }
-
-            if (input.startsWith("event ")) {
-                // A deadline is written as: deadline <description> /by <time>
-                int fromIdx = input.indexOf("/from");
-                int toIdx = input.indexOf("/to");
-                if (fromIdx == -1 || toIdx == -1) {
-                    System.out.println(" Sorry Sir, please use: event <description> /from <time> /to <time>");
-                    System.out.println(DIVIDER);
-                    continue;
+                case "unmark": {
+                    Task task = tasks[Parser.parseTaskIndex(input, taskCount)];
+                    task.markAsNotDone();
+                    System.out.println(" OK, it has been marked as undone:");
+                    printTask(task);
+                    break;
                 }
 
-                // The description sits between the command word and "/by",
-                // and the due date is everything after "/by".
-                String description = input.substring("deadline ".length(), fromIdx).trim();
-                String from = input.substring(fromIdx + "/from".length(), toIdx).trim();
-                String to = input.substring(toIdx + "/to".length()).trim();
+                case "todo":
+                case "deadline":
+                case "event": {
+                    if (taskCount == MAX_TASKS) {
+                        throw new AmadeusException("My list is full, a thousand apologies.");
+                    }
 
-                tasks[taskCount] = new Event(description, from, to);
-                taskCount++;
+                    // The parser builds the right kind of Task and throws if the
+                    // line is malformed, so nothing is stored on a bad command.
+                    Task task;
+                    if (commandWord.equals("todo")) {
+                        task = Parser.parseTodo(input);
+                    } else if (commandWord.equals("deadline")) {
+                        task = Parser.parseDeadline(input);
+                    } else {
+                        task = Parser.parseEvent(input);
+                    }
 
-                System.out.println(" Got it added:");
-                // taskCount has already moved on to the next free slot, so the task
-                // just stored is at taskCount - 1.
-                Amadeus.printTask(tasks[taskCount - 1]);
-                System.out.println(" Now you have " + taskCount + " task(s) in your list");
-                System.out.println(DIVIDER);
-                continue;
+                    tasks[taskCount] = task;
+                    taskCount++;
+
+                    System.out.println(" Got it added:");
+                    printTask(task);
+                    System.out.println(" Now you have " + taskCount + " task(s) in your list");
+                    break;
+                }
+
+                default:
+                    throw new AmadeusException("A million apologies, I don't know what '"
+                            + commandWord + "' means.");
+                }
+            } catch (AmadeusException e) {
+                // The exception message is written to be read by the user, so it
+                // can simply be printed as the bot's reply.
+                System.out.println(" " + e.getMessage());
             }
+
+            System.out.println(DIVIDER);
         }
 
         scanner.close();
