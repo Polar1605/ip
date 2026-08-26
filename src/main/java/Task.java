@@ -7,6 +7,19 @@ public class Task {
         this.status = Status.NOT_DONE;
     }
 
+    /** Returns the task's description, e.g. "read book". */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * Returns true if this task has been completed.
+     * Used when saving, where the state is written as 1 or 0 rather than as an icon.
+     */
+    public boolean isDone() {
+        return status == Status.DONE;
+    }
+
     public String getStatusIcon() {
         return status.getIcon(); // "X" marks a done task
     }

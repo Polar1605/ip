@@ -7,6 +7,11 @@ public class Deadline extends Task {
         this.by = by;
     }
 
+    /** Returns the time the task is due, exactly as the user typed it. */
+    public String getBy() {
+        return by;
+    }
+
     @Override
     public String toString() {
         return "[D]" + super.toString() + " (by: " + by + ")";
