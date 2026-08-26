@@ -1,3 +1,5 @@
+import java.time.LocalDate;
+
 public class Task {
     protected String description;
     protected Status status;
@@ -18,6 +20,19 @@ public class Task {
      */
     public boolean isDone() {
         return status == Status.DONE;
+    }
+
+    /**
+     * Returns true if this task is relevant to the given day, which is what the
+     * "on" command asks each task.
+     * <p>
+     * A plain todo carries no date, so the answer here is always false; the
+     * subclasses that do have dates override this. Asking every task the same
+     * question keeps the date logic inside the class that owns the date, instead
+     * of a chain of type tests at the call site.
+     */
+    public boolean occursOn(LocalDate date) {
+        return false;
     }
 
     public String getStatusIcon() {

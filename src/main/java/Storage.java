@@ -13,11 +13,13 @@ import java.util.List;
  * Each task is stored on its own line as pipe-separated fields, for example:
  * <pre>
  * T | 1 | read book
- * D | 0 | return book | June 6th
- * E | 0 | project meeting | Aug 6th 2pm | 4pm
+ * D | 0 | return book | 2019-06-06
+ * E | 0 | project meeting | 2019-08-06 1400 | 2019-08-06 1600
  * </pre>
  * The first field is the task type, the second is 1 for done and 0 for not
- * done, and the rest are the task's own fields.
+ * done, and the rest are the task's own fields. Dates are written in the
+ * machine-friendly form TaskDateTime accepts, not the form shown to the user,
+ * so that loading is the exact reverse of saving.
  * <p>
  * Note: because "|" separates the fields, a description that itself contains a
  * "|" cannot be read back correctly. Such a line is treated as corrupted and
@@ -136,15 +138,15 @@ public class Storage {
         case "D":
             requireFieldCount(fields, DEADLINE_FIELD_COUNT);
             Deadline deadline = new Deadline(requireNonEmpty(fields[2], "description"),
-                    requireNonEmpty(fields[3], "due time"));
+                    requireDate(fields[3], "due date"));
             applyStatus(deadline, fields[1]);
             return deadline;
 
         case "E":
             requireFieldCount(fields, EVENT_FIELD_COUNT);
             Event event = new Event(requireNonEmpty(fields[2], "description"),
-                    requireNonEmpty(fields[3], "start time"),
-                    requireNonEmpty(fields[4], "end time"));
+                    requireDate(fields[3], "start date"),
+                    requireDate(fields[4], "end date"));
             applyStatus(event, fields[1]);
             return event;
 
@@ -173,6 +175,24 @@ public class Storage {
     private static void requireFieldCount(String[] fields, int expected) throws AmadeusException {
         if (fields.length != expected) {
             throw new AmadeusException("expected " + expected + " fields but found " + fields.length);
+        }
+    }
+
+    /**
+     * Reads a date out of a saved field.
+     * <p>
+     * TaskDateTime.parse phrases its complaint for someone typing a command, which
+     * reads oddly inside a "line skipped" warning, so the message is shortened to
+     * match the other checks here.
+     *
+     * @throws AmadeusException if the field is blank or is not a readable date
+     */
+    private static TaskDateTime requireDate(String field, String fieldName) throws AmadeusException {
+        String text = requireNonEmpty(field, fieldName);
+        try {
+            return TaskDateTime.parse(text);
+        } catch (AmadeusException e) {
+            throw new AmadeusException("the " + fieldName + " '" + text + "' is not a date I can read");
         }
     }
 
@@ -247,10 +267,10 @@ public class Storage {
         if (task instanceof Todo) {
             return "T" + head;
         } else if (task instanceof Deadline deadline) {
-            return "D" + head + FIELD_SEPARATOR + deadline.getBy();
+            return "D" + head + FIELD_SEPARATOR + deadline.getBy().toStorageString();
         } else if (task instanceof Event event) {
-            return "E" + head + FIELD_SEPARATOR + event.getStart()
-                    + FIELD_SEPARATOR + event.getEnd();
+            return "E" + head + FIELD_SEPARATOR + event.getStart().toStorageString()
+                    + FIELD_SEPARATOR + event.getEnd().toStorageString();
         } else {
             throw new AmadeusException("A thousand apologies, I do not know how to save a "
                     + task.getClass().getSimpleName() + ".");

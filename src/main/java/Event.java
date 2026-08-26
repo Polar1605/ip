@@ -1,22 +1,34 @@
+import java.time.LocalDate;
+
+/** A task that runs from one date and time to another. */
 public class Event extends Task {
 
-    protected String start;
-    protected String end;
+    protected TaskDateTime start;
+    protected TaskDateTime end;
 
-    public Event(String description, String start, String end) {
+    public Event(String description, TaskDateTime start, TaskDateTime end) {
         super(description);
         this.start = start;
         this.end = end;
     }
 
-    /** Returns the start time, exactly as the user typed it. */
-    public String getStart() {
+    /** Returns the date the event starts. */
+    public TaskDateTime getStart() {
         return start;
     }
 
-    /** Returns the end time, exactly as the user typed it. */
-    public String getEnd() {
+    /** Returns the date the event ends. */
+    public TaskDateTime getEnd() {
         return end;
+    }
+
+    /**
+     * An event is relevant to every day it spans, not only the day it starts,
+     * so a three-day event shows up on all three days.
+     */
+    @Override
+    public boolean occursOn(LocalDate date) {
+        return !date.isBefore(start.getDate()) && !date.isAfter(end.getDate());
     }
 
     @Override

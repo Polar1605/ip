@@ -1,4 +1,5 @@
 
+import java.time.LocalDate;
 import java.util.*;
 public class Amadeus {
     /** Horizontal rule used to separate the chatbot's messages from the rest of the output. */
@@ -112,6 +113,30 @@ public class Amadeus {
                         System.out.println(" " + (i + 1) + "." + tasks.get(i));
                     }
                     break;
+
+                case "on": {
+                    // Asks every task whether it falls on that day, so todos
+                    // (which have no date) simply answer no.
+                    LocalDate date = Parser.parseDate(input);
+                    List<Task> matches = new ArrayList<>();
+                    for (Task task : tasks) {
+                        if (task.occursOn(date)) {
+                            matches.add(task);
+                        }
+                    }
+
+                    if (matches.isEmpty()) {
+                        System.out.println(" Nothing is happening on "
+                                + TaskDateTime.format(date) + ", sir.");
+                    } else {
+                        System.out.println(" Here are the " + matches.size()
+                                + " task(s) on " + TaskDateTime.format(date) + ":");
+                        for (int i = 0; i < matches.size(); i++) {
+                            System.out.println(" " + (i + 1) + "." + matches.get(i));
+                        }
+                    }
+                    break;
+                }
 
                 case "mark": {
                     Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));

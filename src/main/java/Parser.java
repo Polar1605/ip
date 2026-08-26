@@ -1,3 +1,4 @@
+import java.time.LocalDate;
 
 public class Parser {
 
@@ -38,16 +39,17 @@ public class Parser {
     }
 
     /**
-     * Parses a line of the form {@code deadline <description> /by <time>}.
+     * Parses a line of the form {@code deadline <description> /by <date>}.
      *
-     * @throws AmadeusException if the description, the "/by" marker, or the time is missing
+     * @throws AmadeusException if the description, the "/by" marker, or the date is
+     *                          missing, or if the date cannot be understood
      */
     public static Deadline parseDeadline(String input) throws AmadeusException {
         String arguments = parseArguments(input);
         int byIdx = arguments.indexOf("/by");
         if (byIdx == -1) {
             throw new AmadeusException("Ten thousand apologies, a deadline needs a '/by'."
-                    + "\n Please use: deadline <description> /by <time>");
+                    + "\n Please use: deadline <description> /by <date>");
         }
 
         // The description sits before "/by"; the due time is everything after it.
@@ -56,20 +58,22 @@ public class Parser {
 
         if (description.isEmpty()) {
             throw new AmadeusException("A hundred apologies, a deadline needs a description."
-                    + "\n Please use: deadline <description> /by <time>");
+                    + "\n Please use: deadline <description> /by <date>");
         }
         if (by.isEmpty()) {
             throw new AmadeusException("A hundred apologies, you didn't say when it's due."
-                    + "\n Please use: deadline <description> /by <time>");
+                    + "\n Please use: deadline <description> /by <date>");
         }
-        return new Deadline(description, by);
+        // TaskDateTime.parse throws if the text is not a date it recognises, so a
+        // Deadline can never be built with a due date the app cannot understand.
+        return new Deadline(description, TaskDateTime.parse(by));
     }
 
     /**
      * Parses a line of the form {@code event <description> /from <start> /to <end>}.
      *
-     * @throws AmadeusException if any of the three parts is missing, or if "/to"
-     *                          appears before "/from"
+     * @throws AmadeusException if any of the three parts is missing, if "/to"
+     *                          appears before "/from", or if a date cannot be understood
      */
     public static Event parseEvent(String input) throws AmadeusException {
         String arguments = parseArguments(input);
@@ -98,7 +102,26 @@ public class Parser {
             throw new AmadeusException("A hundred apologies, an event needs both a start and an end time."
                     + "\n Please use: event <description> /from <start> /to <end>");
         }
-        return new Event(description, start, end);
+        return new Event(description, TaskDateTime.parse(start), TaskDateTime.parse(end));
+    }
+
+    /**
+     * Reads the date given to the "on" command, e.g. "on 2019-12-02".
+     * <p>
+     * Any time of day the user adds is dropped, because "on" asks about a whole
+     * day rather than a moment within it.
+     *
+     * @param input the whole line the user typed, e.g. "on 2019-12-02"
+     * @return the day being asked about
+     * @throws AmadeusException if the date is missing or not in a known format
+     */
+    public static LocalDate parseDate(String input) throws AmadeusException {
+        String argument = parseArguments(input);
+        if (argument.isEmpty()) {
+            throw new AmadeusException("A hundred apologies, please tell me which date."
+                    + "\n Please use: on <date>, for example: on 2019-12-02");
+        }
+        return TaskDateTime.parse(argument).getDate();
     }
 
     /**
