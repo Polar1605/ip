@@ -1,13 +1,26 @@
 package amadeus.parser;
 
+import java.time.LocalDate;
+
 import amadeus.AmadeusException;
 import amadeus.task.Deadline;
 import amadeus.task.Event;
 import amadeus.task.TaskDateTime;
 import amadeus.task.Todo;
 
-import java.time.LocalDate;
-
+/**
+ * Turns the lines the user types into the commands and objects the rest of the
+ * app works with.
+ * <p>
+ * All the knowledge of the input format - where "/by" sits, that the user counts
+ * tasks from 1, which date formats are allowed - lives here, so the main loop can
+ * work with real objects instead of picking strings apart. Anything the user
+ * types that cannot be understood is reported as an {@link AmadeusException} with
+ * a message telling them the correct form, which means an invalid task can never
+ * be built in the first place.
+ * <p>
+ * Every method is static because a Parser has nothing to remember between calls.
+ */
 public class Parser {
 
     /**

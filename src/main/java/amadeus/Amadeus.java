@@ -1,13 +1,28 @@
 package amadeus;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
 import amadeus.parser.Parser;
 import amadeus.storage.Storage;
 import amadeus.task.Task;
 import amadeus.task.TaskDateTime;
 import amadeus.ui.Ui;
 
-import java.time.LocalDate;
-import java.util.*;
+/**
+ * Entry point of the Amadeus chatbot.
+ * <p>
+ * This class owns the read-evaluate-print loop: it reads a line from the
+ * {@link Ui}, hands it to the {@link Parser} to be understood, updates the task
+ * list, and asks the Ui to report what happened. The work itself is delegated -
+ * parsing to Parser, saving and loading to {@link Storage}, all input and output
+ * to Ui - so this class only has to decide what should happen for each command,
+ * not how any of it is done.
+ * <p>
+ * An {@link AmadeusException} raised by any command is caught inside the loop and
+ * shown to the user, so a mistyped command never ends the session.
+ */
 public class Amadeus {
 
     private static final int MAX_TASKS = 100;
@@ -37,6 +52,11 @@ public class Amadeus {
         }
     }
 
+    /**
+     * Starts the chatbot and runs it until the user types "bye" or the input ends.
+     *
+     * @param args command line arguments; not used, as the save file location is fixed.
+     */
     public static void main(String[] args) {
         Ui ui = new Ui();
         ui.showWelcome();

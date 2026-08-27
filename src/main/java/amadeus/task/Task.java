@@ -2,10 +2,25 @@ package amadeus.task;
 
 import java.time.LocalDate;
 
+/**
+ * A single entry in the task list.
+ * <p>
+ * This is the base class of {@link Todo}, {@link Deadline} and {@link Event}.
+ * It holds what every task has - a description and whether it is done - and
+ * leaves anything to do with dates to the subclasses. The fields are protected
+ * rather than private so the subclasses can read them when building their own
+ * {@code toString}.
+ */
 public class Task {
     protected String description;
     protected Status status;
 
+    /**
+     * Creates a task that starts off not done, which is the only sensible state
+     * for a task the user has just typed in.
+     *
+     * @param description what the task is, e.g. "read book".
+     */
     public Task(String description) {
         this.description = description;
         this.status = Status.NOT_DONE;
@@ -37,18 +52,25 @@ public class Task {
         return false;
     }
 
+    /** Returns the character shown between the brackets, "X" for a done task and a space otherwise. */
     public String getStatusIcon() {
         return status.getIcon(); // "X" marks a done task
     }
 
+    /** Marks this task as completed, as the "mark" command does. */
     public void markAsDone() {
         this.status = Status.DONE;
     }
 
+    /** Marks this task as not yet completed, undoing a {@link #markAsDone()}. */
     public void markAsNotDone() {
         this.status = Status.NOT_DONE;
     }
 
+    /**
+     * Returns the task as the user sees it, e.g. "[ ] read book".
+     * Each subclass prefixes its own tag to this, e.g. "[T]" for a todo.
+     */
     @Override
     public String toString() {
         return "[" + this.getStatusIcon() + "] " + description;

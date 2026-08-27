@@ -1,9 +1,9 @@
 package amadeus.ui;
 
-import amadeus.task.Task;
-
 import java.util.List;
 import java.util.Scanner;
+
+import amadeus.task.Task;
 
 /**
  * Everything the chatbot says and everything the user types.
@@ -41,6 +41,7 @@ public class Ui {
     /** Reads the user's commands. Owned by Ui so nothing else has to know about System.in. */
     private final Scanner scanner;
 
+    /** Creates a Ui that reads the user's commands from standard input. */
     public Ui() {
         this.scanner = new Scanner(System.in);
     }

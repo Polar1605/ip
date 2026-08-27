@@ -1,12 +1,5 @@
 package amadeus.storage;
 
-import amadeus.AmadeusException;
-import amadeus.task.Deadline;
-import amadeus.task.Event;
-import amadeus.task.Task;
-import amadeus.task.TaskDateTime;
-import amadeus.task.Todo;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -14,6 +7,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+
+import amadeus.AmadeusException;
+import amadeus.task.Deadline;
+import amadeus.task.Event;
+import amadeus.task.Task;
+import amadeus.task.TaskDateTime;
+import amadeus.task.Todo;
 
 /**
  * Reads the task list from disk when the chatbot starts and writes it back

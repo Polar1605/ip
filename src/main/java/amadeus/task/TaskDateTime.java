@@ -1,7 +1,5 @@
 package amadeus.task;
 
-import amadeus.AmadeusException;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -9,6 +7,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.Locale;
+
+import amadeus.AmadeusException;
 
 /**
  * A date written by the user, with an optional time of day.
