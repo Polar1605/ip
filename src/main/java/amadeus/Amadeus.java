@@ -132,6 +132,26 @@ public class Amadeus {
                     break;
                 }
 
+                case "find": {
+                    // Asks every task whether its description contains the keyword,
+                    // mirroring how "on" asks every task about a date.
+                    String keyword = Parser.parseKeyword(input);
+                    List<Task> matches = new ArrayList<>();
+                    for (Task task : tasks) {
+                        if (task.descriptionContains(keyword)) {
+                            matches.add(task);
+                        }
+                    }
+
+                    if (matches.isEmpty()) {
+                        ui.show("I found no tasks matching '" + keyword + "', sir.");
+                    } else {
+                        ui.show("Here are the matching tasks in your list:");
+                        ui.showTaskList(matches);
+                    }
+                    break;
+                }
+
                 case "mark": {
                     Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));
                     task.markAsDone();

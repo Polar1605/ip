@@ -52,6 +52,21 @@ public class Task {
         return false;
     }
 
+    /**
+     * Returns true if the description contains the given keyword, ignoring case.
+     * <p>
+     * Case is ignored so that "find Book" and "find book" both turn up
+     * "read book"; a user searching their own list should not have to remember
+     * how they capitalised it. The match is on any part of the description, so
+     * "book" also finds "bookshop".
+     *
+     * @param keyword the text to look for, e.g. "book".
+     * @return true if the keyword appears anywhere in the description.
+     */
+    public boolean descriptionContains(String keyword) {
+        return description.toLowerCase().contains(keyword.toLowerCase());
+    }
+
     /** Returns the character shown between the brackets, "X" for a done task and a space otherwise. */
     public String getStatusIcon() {
         return status.getIcon(); // "X" marks a done task

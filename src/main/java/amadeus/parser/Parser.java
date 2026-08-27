@@ -150,6 +150,26 @@ public class Parser {
     }
 
     /**
+     * Returns the keyword given to the "find" command, e.g. "book" from "find book".
+     * <p>
+     * Everything after the command word is taken as one keyword rather than
+     * being split into several, so "find read book" searches for the whole
+     * phrase "read book".
+     *
+     * @param input the whole line the user typed, e.g. "find book".
+     * @return the text to search descriptions for.
+     * @throws AmadeusException if no keyword was given.
+     */
+    public static String parseKeyword(String input) throws AmadeusException {
+        String keyword = parseArguments(input);
+        if (keyword.isEmpty()) {
+            throw new AmadeusException("A hundred apologies, please tell me what to search for."
+                    + "\n Please use: find <keyword>");
+        }
+        return keyword;
+    }
+
+    /**
      * Converts the number typed after "mark" or "unmark" into an array index.
      * The number shown to the user starts at 1, but arrays start at 0, hence the
      * subtraction at the end.

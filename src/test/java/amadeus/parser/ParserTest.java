@@ -34,6 +34,17 @@ public class ParserTest {
         assertThrows(AmadeusException.class, () -> Parser.parseTaskIndex("mark 4", 3));
     }
 
+    /** Everything after "find" is one keyword, so a phrase is not split up. */
+    @Test
+    void parseKeyword_multiWordKeyword_returnsWholePhrase() throws AmadeusException {
+        assertEquals("read book", Parser.parseKeyword("find read book"));
+    }
+
+    @Test
+    void parseKeyword_missingKeyword_throwsAmadeusException() {
+        assertThrows(AmadeusException.class, () -> Parser.parseKeyword("find"));
+    }
+
     /**
      * Integer.parseInt reports bad input by throwing NumberFormatException, which
      * the parser must convert into an AmadeusException so the app can print a
