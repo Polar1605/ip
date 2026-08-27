@@ -1,3 +1,12 @@
+package amadeus.storage;
+
+import amadeus.AmadeusException;
+import amadeus.task.Deadline;
+import amadeus.task.Event;
+import amadeus.task.Task;
+import amadeus.task.TaskDateTime;
+import amadeus.task.Todo;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

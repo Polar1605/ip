@@ -1,3 +1,7 @@
+package amadeus.task;
+
+import amadeus.AmadeusException;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;

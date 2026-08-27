@@ -1,3 +1,5 @@
+package amadeus.task;
+
 import java.time.LocalDate;
 
 /** A task that runs from one date and time to another. */

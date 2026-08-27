@@ -1,3 +1,5 @@
+package amadeus.task;
+
 /**
  * Whether a task has been completed.
  * <p>

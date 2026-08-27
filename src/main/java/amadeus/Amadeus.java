@@ -1,3 +1,10 @@
+package amadeus;
+
+import amadeus.parser.Parser;
+import amadeus.storage.Storage;
+import amadeus.task.Task;
+import amadeus.task.TaskDateTime;
+import amadeus.ui.Ui;
 
 import java.time.LocalDate;
 import java.util.*;

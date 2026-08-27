@@ -1,3 +1,7 @@
+package amadeus.ui;
+
+import amadeus.task.Task;
+
 import java.util.List;
 import java.util.Scanner;
 

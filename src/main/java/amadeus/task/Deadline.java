@@ -1,3 +1,5 @@
+package amadeus.task;
+
 import java.time.LocalDate;
 
 /** A task that has to be finished by a particular date and time. */

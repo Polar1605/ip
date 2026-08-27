@@ -1,3 +1,11 @@
+package amadeus.parser;
+
+import amadeus.AmadeusException;
+import amadeus.task.Deadline;
+import amadeus.task.Event;
+import amadeus.task.TaskDateTime;
+import amadeus.task.Todo;
+
 import java.time.LocalDate;
 
 public class Parser {
