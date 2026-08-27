@@ -62,12 +62,14 @@ public class Storage {
     private final List<String> loadWarnings = new ArrayList<>();
 
     /**
-     * @param first the first part of the path, e.g. "data"
-     * @param more  the remaining parts, e.g. "amadeus.txt"
-     *              <p>
-     *              The path is assembled from separate parts rather than written as one string
-     *              so that Java inserts the separator its own operating system uses
-     *              ("\" on Windows, "/" elsewhere).
+     * Creates a Storage that reads and writes the save file at the given path.
+     * <p>
+     * The path is assembled from separate parts rather than written as one string
+     * so that Java inserts the separator its own operating system uses
+     * ("\" on Windows, "/" elsewhere).
+     *
+     * @param first the first part of the path, e.g. "data".
+     * @param more  the remaining parts, e.g. "amadeus.txt".
      */
     public Storage(String first, String... more) {
         this.filePath = Paths.get(first, more);

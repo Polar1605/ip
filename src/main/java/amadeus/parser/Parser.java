@@ -48,7 +48,11 @@ public class Parser {
     }
 
     /**
-     * @throws AmadeusException if the description is missing
+     * Returns the todo described by a line of the form {@code todo <description>}.
+     *
+     * @param input the whole line the user typed, e.g. "todo read book".
+     * @return a new todo, not yet done.
+     * @throws AmadeusException if the description is missing.
      */
     public static Todo parseTodo(String input) throws AmadeusException {
         String description = parseArguments(input);
