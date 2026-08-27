@@ -2,8 +2,6 @@
 import java.time.LocalDate;
 import java.util.*;
 public class Amadeus {
-    /** Horizontal rule used to separate the chatbot's messages from the rest of the output. */
-    private static final String DIVIDER = "____________________________________________________________";
 
     private static final int MAX_TASKS = 100;
 
@@ -16,26 +14,6 @@ public class Amadeus {
     private static final String DATA_FOLDER = "data";
     private static final String DATA_FILE = "amadeus.txt";
 
-    /** Name the chatbot introduces itself with. */
-    private static final String NAME = "Amadeus";
-
-    /**
-     * ASCII-art banner shown on startup.
-     * Each backslash is written as "\\" because a lone backslash starts an escape
-     * sequence in a Java string literal.
-     */
-    private static final String BANNER =
-              "     _     __  __      _     ____   _____  _   _  ____  \n"
-            + "    / \\   |  \\/  |    / \\   |  _ \\ | ____|| | | |/ ___| \n"
-            + "   / _ \\  | |\\/| |   / _ \\  | | | ||  _|  | | | |\\___ \\ \n"
-            + "  / ___ \\ | |  | |  / ___ \\ | |_| || |___ | |_| | ___) |\n"
-            + " /_/   \\_\\|_|  |_| /_/   \\_\\|____/ |_____| \\___/ |____/ ";
-
-    /** Prints a single task indented, the way it appears in confirmation messages. */
-    private static void printTask(Task task) {
-        System.out.println("    " + task);
-    }
-
     /**
      * Writes the current list to disk and tells the user if that failed.
      * <p>
@@ -44,20 +22,17 @@ public class Amadeus {
      * change the user just made is still valid in memory, so there is no reason
      * to end the session over it.
      */
-    private static void save(Storage storage, List<Task> tasks) {
+    private static void save(Storage storage, List<Task> tasks, Ui ui) {
         try {
             storage.save(tasks);
         } catch (AmadeusException e) {
-            System.out.println(" " + e.getMessage());
+            ui.showError(e.getMessage());
         }
     }
 
     public static void main(String[] args) {
-        System.out.println(DIVIDER);
-        System.out.println(BANNER);
-        System.out.println("Hello I'm " + NAME + ".");
-        System.out.println("Sir what do you need assistance with");
-        System.out.println(DIVIDER);
+        Ui ui = new Ui();
+        ui.showWelcome();
 
         // Tasks entered. Loaded from disk so the list survives between runs;
         // if there is no saved file yet, load() simply hands back an empty list.
@@ -71,29 +46,26 @@ public class Amadeus {
         try {
             tasks = storage.load();
             for (String warning : storage.getLoadWarnings()) {
-                System.out.println(" " + warning);
+                ui.show(warning);
                 hasLoadMessage = true;
             }
             if (!tasks.isEmpty()) {
-                System.out.println(" I've loaded " + tasks.size() + " task(s) from your last session.");
+                ui.show("I've loaded " + tasks.size() + " task(s) from your last session.");
                 hasLoadMessage = true;
             }
         } catch (AmadeusException e) {
             // The list could not be read at all, so the session starts empty
             // rather than stopping; the user is told why.
-            System.out.println(" " + e.getMessage());
+            ui.showError(e.getMessage());
             hasLoadMessage = true;
         }
         if (hasLoadMessage) {
-            System.out.println(DIVIDER);
+            ui.showLine();
         }
 
-        Scanner scanner = new Scanner(System.in);
-        // hasNextLine() stops the loop cleanly if the input runs out before "bye",
-        // which is what happens when input is piped in from a file.
-        while (scanner.hasNextLine()) {
-            String input = scanner.nextLine();
-            System.out.println(DIVIDER);
+        while (ui.hasNextCommand()) {
+            String input = ui.readCommand();
+            ui.showLine();
 
             // One try/catch around the whole command covers every way the input
             // can be wrong, so each branch below can assume its input is valid.
@@ -102,16 +74,14 @@ public class Amadeus {
 
                 switch (commandWord) {
                 case "bye":
-                    System.out.println(" Buh bye ");
-                    System.out.println(DIVIDER);
-                    scanner.close();
+                    ui.showGoodbye();
+                    ui.showLine();
+                    ui.close();
                     return;
 
                 case "list":
-                    System.out.println(" Here are the " + tasks.size() + " task(s) in your list:");
-                    for (int i = 0; i < tasks.size(); i++) {
-                        System.out.println(" " + (i + 1) + "." + tasks.get(i));
-                    }
+                    ui.show("Here are the " + tasks.size() + " task(s) in your list:");
+                    ui.showTaskList(tasks);
                     break;
 
                 case "on": {
@@ -126,14 +96,11 @@ public class Amadeus {
                     }
 
                     if (matches.isEmpty()) {
-                        System.out.println(" Nothing is happening on "
-                                + TaskDateTime.format(date) + ", sir.");
+                        ui.show("Nothing is happening on " + TaskDateTime.format(date) + ", sir.");
                     } else {
-                        System.out.println(" Here are the " + matches.size()
+                        ui.show("Here are the " + matches.size()
                                 + " task(s) on " + TaskDateTime.format(date) + ":");
-                        for (int i = 0; i < matches.size(); i++) {
-                            System.out.println(" " + (i + 1) + "." + matches.get(i));
-                        }
+                        ui.showTaskList(matches);
                     }
                     break;
                 }
@@ -141,9 +108,9 @@ public class Amadeus {
                 case "mark": {
                     Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));
                     task.markAsDone();
-                    save(storage, tasks);
-                    System.out.println(" Fantastic! I've marked this task as done:");
-                    printTask(task);
+                    save(storage, tasks, ui);
+                    ui.show("Fantastic! I've marked this task as done:");
+                    ui.showTask(task);
                     break;
                 }
 
@@ -151,19 +118,19 @@ public class Amadeus {
                     int index = Parser.parseTaskIndex(input, tasks.size());
                     Task tmp = tasks.get(index);
                     tasks.remove(index);
-                    save(storage, tasks);
-                    System.out.println(" Fantastic! I've removed this task:");
-                    printTask(tmp);
-                    System.out.println(" Now you have " + tasks.size() + " task(s) in your list");
+                    save(storage, tasks, ui);
+                    ui.show("Fantastic! I've removed this task:");
+                    ui.showTask(tmp);
+                    ui.show("Now you have " + tasks.size() + " task(s) in your list");
                     break;
                 }
 
                 case "unmark": {
                     Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));
                     task.markAsNotDone();
-                    save(storage, tasks);
-                    System.out.println(" OK, it has been marked as undone:");
-                    printTask(task);
+                    save(storage, tasks, ui);
+                    ui.show("OK, it has been marked as undone:");
+                    ui.showTask(task);
                     break;
                 }
 
@@ -186,11 +153,11 @@ public class Amadeus {
                     }
 
                     tasks.add(task);
-                    save(storage, tasks);
+                    save(storage, tasks, ui);
 
-                    System.out.println(" Got it added:");
-                    printTask(task);
-                    System.out.println(" Now you have " + tasks.size() + " task(s) in your list");
+                    ui.show("Got it added:");
+                    ui.showTask(task);
+                    ui.show("Now you have " + tasks.size() + " task(s) in your list");
                     break;
                 }
 
@@ -201,12 +168,12 @@ public class Amadeus {
             } catch (AmadeusException e) {
                 // The exception message is written to be read by the user, so it
                 // can simply be printed as the bot's reply.
-                System.out.println(" " + e.getMessage());
+                ui.showError(e.getMessage());
             }
 
-            System.out.println(DIVIDER);
+            ui.showLine();
         }
 
-        scanner.close();
+        ui.close();
     }
 }
