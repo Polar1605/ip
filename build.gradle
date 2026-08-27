@@ -37,7 +37,7 @@ test {
 }
 
 application {
-    mainClass = 'seedu.duke.Duke'
+    mainClass = 'amadeus.Amadeus'
 }
 
 jar {
@@ -48,9 +48,10 @@ jar {
 }
 
 shadowJar {
-    archiveFileName = 'duke.jar'
+    archiveFileName = 'amadeus.jar'
 }
 
 run {
     standardInput = System.in
 }
+
