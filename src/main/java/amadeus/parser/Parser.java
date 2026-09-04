@@ -57,8 +57,8 @@ public class Parser {
     public static Todo parseTodo(String input) throws AmadeusException {
         String description = parseArguments(input);
         if (description.isEmpty()) {
-            throw new AmadeusException("A hundred apologies, a todo needs a description."
-                    + "\n Please use: todo <description>");
+            throw new AmadeusException("A hundred apologies, a todo needs a description.",
+                    "Please use: todo <description>");
         }
         return new Todo(description);
     }
@@ -73,8 +73,8 @@ public class Parser {
         String arguments = parseArguments(input);
         int byIdx = arguments.indexOf("/by");
         if (byIdx == -1) {
-            throw new AmadeusException("Ten thousand apologies, a deadline needs a '/by'."
-                    + "\n Please use: deadline <description> /by <date>");
+            throw new AmadeusException("Ten thousand apologies, a deadline needs a '/by'.",
+                    "Please use: deadline <description> /by <date>");
         }
 
         // The description sits before "/by"; the due time is everything after it.
@@ -82,12 +82,12 @@ public class Parser {
         String by = arguments.substring(byIdx + "/by".length()).trim();
 
         if (description.isEmpty()) {
-            throw new AmadeusException("A hundred apologies, a deadline needs a description."
-                    + "\n Please use: deadline <description> /by <date>");
+            throw new AmadeusException("A hundred apologies, a deadline needs a description.",
+                    "Please use: deadline <description> /by <date>");
         }
         if (by.isEmpty()) {
-            throw new AmadeusException("A hundred apologies, you didn't say when it's due."
-                    + "\n Please use: deadline <description> /by <date>");
+            throw new AmadeusException("A hundred apologies, you didn't say when it's due.",
+                    "Please use: deadline <description> /by <date>");
         }
         // TaskDateTime.parse throws if the text is not a date it recognises, so a
         // Deadline can never be built with a due date the app cannot understand.
@@ -106,13 +106,13 @@ public class Parser {
         int toIdx = arguments.indexOf("/to");
 
         if (fromIdx == -1 || toIdx == -1) {
-            throw new AmadeusException("A million apologies, an event needs both '/from' and '/to'."
-                    + "\n Please use: event <description> /from <start> /to <end>");
+            throw new AmadeusException("A million apologies, an event needs both '/from' and '/to'.",
+                    "Please use: event <description> /from <start> /to <end>");
         }
         // The three parts are read by position, so they have to be in this order.
         if (toIdx < fromIdx) {
-            throw new AmadeusException("A million apologies, '/from' has to come before '/to'."
-                    + "\n Please use: event <description> /from <start> /to <end>");
+            throw new AmadeusException("A million apologies, '/from' has to come before '/to'.",
+                    "Please use: event <description> /from <start> /to <end>");
         }
 
         String description = arguments.substring(0, fromIdx).trim();
@@ -120,12 +120,12 @@ public class Parser {
         String end = arguments.substring(toIdx + "/to".length()).trim();
 
         if (description.isEmpty()) {
-            throw new AmadeusException("A hundred apologies, an event needs a description."
-                    + "\n Please use: event <description> /from <start> /to <end>");
+            throw new AmadeusException("A hundred apologies, an event needs a description.",
+                    "Please use: event <description> /from <start> /to <end>");
         }
         if (start.isEmpty() || end.isEmpty()) {
-            throw new AmadeusException("A hundred apologies, an event needs both a start and an end time."
-                    + "\n Please use: event <description> /from <start> /to <end>");
+            throw new AmadeusException("A hundred apologies, an event needs both a start and an end time.",
+                    "Please use: event <description> /from <start> /to <end>");
         }
         return new Event(description, TaskDateTime.parse(start), TaskDateTime.parse(end));
     }
@@ -143,8 +143,8 @@ public class Parser {
     public static LocalDate parseDate(String input) throws AmadeusException {
         String argument = parseArguments(input);
         if (argument.isEmpty()) {
-            throw new AmadeusException("A hundred apologies, please tell me which date."
-                    + "\n Please use: on <date>, for example: on 2019-12-02");
+            throw new AmadeusException("A hundred apologies, please tell me which date.",
+                    "Please use: on <date>, for example: on 2019-12-02");
         }
         return TaskDateTime.parse(argument).getDate();
     }
@@ -163,8 +163,8 @@ public class Parser {
     public static String parseKeyword(String input) throws AmadeusException {
         String keyword = parseArguments(input);
         if (keyword.isEmpty()) {
-            throw new AmadeusException("A hundred apologies, please tell me what to search for."
-                    + "\n Please use: find <keyword>");
+            throw new AmadeusException("A hundred apologies, please tell me what to search for.",
+                    "Please use: find <keyword>");
         }
         return keyword;
     }

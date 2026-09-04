@@ -115,8 +115,8 @@ public class TaskDateTime {
                 // Not this format either.
             }
         }
-        throw new AmadeusException("A hundred apologies, I cannot read '" + input + "' as a date."
-                + "\n Please use one of: " + EXAMPLE_FORMATS);
+        throw new AmadeusException("A hundred apologies, I cannot read '" + input + "' as a date.",
+                "Please use one of: " + EXAMPLE_FORMATS);
     }
 
     /** Returns the calendar day, with the time of day dropped. */

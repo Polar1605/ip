@@ -109,7 +109,8 @@ public class Storage {
         } catch (IOException e) {
             // Covers an unreadable file as well as one that is not valid UTF-8 text.
             throw new AmadeusException("A thousand apologies, I could not read " + filePath
-                    + " (" + describe(e) + ").\n Starting with an empty list instead.");
+                    + " (" + describe(e) + ").",
+                    "Starting with an empty list instead.");
         }
 
         for (int i = 0; i < lines.size(); i++) {
