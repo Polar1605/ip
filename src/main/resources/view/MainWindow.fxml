@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+
+<!--
+  The window: a scrolling conversation above, a text field and a Send button below.
+  Anchors rather than fixed positions are used so the conversation grows when the
+  window is resized, while the input row stays pinned to the bottom.
+-->
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
+            prefHeight="600.0" prefWidth="417.0"
+            xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="amadeus.ui.MainWindow">
+    <children>
+        <ScrollPane fx:id="scrollPane" fitToWidth="true" hbarPolicy="NEVER"
+                    AnchorPane.bottomAnchor="42.0" AnchorPane.leftAnchor="0.0"
+                    AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <content>
+                <VBox fx:id="dialogContainer" fillWidth="true" spacing="4.0">
+                    <padding>
+                        <Insets bottom="8.0" left="4.0" right="4.0" top="8.0" />
+                    </padding>
+                </VBox>
+            </content>
+        </ScrollPane>
+
+        <!-- onAction on the text field is what makes the Enter key send the message. -->
+        <TextField fx:id="userInput" onAction="#handleUserInput" prefHeight="41.0"
+                   promptText="Type a command, sir..."
+                   AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                   AnchorPane.rightAnchor="76.0" />
+        <Button fx:id="sendButton" onAction="#handleUserInput" prefHeight="41.0" prefWidth="76.0"
+                text="Send"
+                AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" />
+    </children>
+</AnchorPane>

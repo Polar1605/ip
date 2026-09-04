@@ -1,22 +1,20 @@
 package amadeus.ui;
 
-import java.util.List;
 import java.util.Scanner;
 
-import amadeus.task.Task;
-
 /**
- * Everything the chatbot says and everything the user types.
+ * Everything the chatbot says and everything the user types, in the console.
  * <p>
  * This class is the only place in the app that touches {@code System.in} and
- * {@code System.out}. Keeping input and output in one class means the rest of
- * the code can decide <em>what</em> to say without also deciding <em>how</em>
- * it reaches the user, so swapping the console for, say, a window later would
- * only change this file.
+ * {@code System.out}. Deciding <em>what</em> to say belongs to
+ * {@link amadeus.Amadeus}, which hands back a reply as plain text; this class only
+ * decides <em>how</em> that text reaches a console user. The JavaFX window in
+ * {@link MainWindow} is the alternative to this class, and takes its replies from
+ * exactly the same method.
  * <p>
- * Every message the bot speaks is printed with a single leading space, which is
- * what visually sets the bot's voice apart from the line the user just typed.
- * That space is added here rather than by each caller, so no caller can forget it.
+ * Every message the bot speaks is printed with a single leading space, which is what
+ * visually sets the bot's voice apart from the line the user just typed. That space is
+ * added here rather than by each caller, so no caller can forget it.
  */
 public class Ui {
 
@@ -76,40 +74,18 @@ public class Ui {
         System.out.println(DIVIDER);
     }
 
-    /** Prints one line in the bot's voice. */
-    public void show(String message) {
-        System.out.println(" " + message);
-    }
-
     /**
-     * Prints a message describing something that went wrong.
+     * Prints a reply in the bot's voice.
      * <p>
-     * Identical to {@link #show(String)} today; it exists as its own method so
-     * that error output can later be styled differently (coloured, say) without
-     * hunting down which calls were errors.
+     * The reply arrives as one string because that is the form the JavaFX window wants;
+     * it is split here so that every line gets the leading space, not just the first.
+     *
+     * @param reply the reply text, whose lines are separated by {@code \n}.
      */
-    public void showError(String message) {
-        show(message);
-    }
-
-    /** Prints a single task indented, the way it appears in confirmation messages. */
-    public void showTask(Task task) {
-        System.out.println("    " + task);
-    }
-
-    /**
-     * Prints tasks as a numbered list starting at 1, because that is the number
-     * the user types back in commands such as "mark 2".
-     */
-    public void showTaskList(List<Task> tasks) {
-        for (int i = 0; i < tasks.size(); i++) {
-            System.out.println(" " + (i + 1) + "." + tasks.get(i));
+    public void showReply(String reply) {
+        for (String line : reply.split("\n")) {
+            System.out.println(" " + line);
         }
-    }
-
-    /** Prints the farewell shown when the user types "bye". */
-    public void showGoodbye() {
-        show("Buh bye ");
     }
 
     /** Releases the input source. Called once, when the app is about to end. */
