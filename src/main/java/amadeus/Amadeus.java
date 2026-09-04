@@ -100,117 +100,117 @@ public class Amadeus {
                 String commandWord = Parser.parseCommandWord(input);
 
                 switch (commandWord) {
-                case "bye":
-                    ui.showGoodbye();
-                    ui.showLine();
-                    ui.close();
-                    return;
+                    case "bye":
+                        ui.showGoodbye();
+                        ui.showLine();
+                        ui.close();
+                        return;
 
-                case "list":
-                    ui.show("Here are the " + tasks.size() + " task(s) in your list:");
-                    ui.showTaskList(tasks);
-                    break;
+                    case "list":
+                        ui.show("Here are the " + tasks.size() + " task(s) in your list:");
+                        ui.showTaskList(tasks);
+                        break;
 
-                case "on": {
-                    // Asks every task whether it falls on that day, so todos
-                    // (which have no date) simply answer no.
-                    LocalDate date = Parser.parseDate(input);
-                    List<Task> matches = new ArrayList<>();
-                    for (Task task : tasks) {
-                        if (task.occursOn(date)) {
-                            matches.add(task);
+                    case "on": {
+                        // Asks every task whether it falls on that day, so todos
+                        // (which have no date) simply answer no.
+                        LocalDate date = Parser.parseDate(input);
+                        List<Task> matches = new ArrayList<>();
+                        for (Task task : tasks) {
+                            if (task.occursOn(date)) {
+                                matches.add(task);
+                            }
                         }
-                    }
 
-                    if (matches.isEmpty()) {
-                        ui.show("Nothing is happening on " + TaskDateTime.format(date) + ", sir.");
-                    } else {
-                        ui.show("Here are the " + matches.size()
-                                + " task(s) on " + TaskDateTime.format(date) + ":");
-                        ui.showTaskList(matches);
-                    }
-                    break;
-                }
-
-                case "find": {
-                    // Asks every task whether its description contains the keyword,
-                    // mirroring how "on" asks every task about a date.
-                    String keyword = Parser.parseKeyword(input);
-                    List<Task> matches = new ArrayList<>();
-                    for (Task task : tasks) {
-                        if (task.descriptionContains(keyword)) {
-                            matches.add(task);
+                        if (matches.isEmpty()) {
+                            ui.show("Nothing is happening on " + TaskDateTime.format(date) + ", sir.");
+                        } else {
+                            ui.show("Here are the " + matches.size()
+                                    + " task(s) on " + TaskDateTime.format(date) + ":");
+                            ui.showTaskList(matches);
                         }
+                        break;
                     }
 
-                    if (matches.isEmpty()) {
-                        ui.show("I found no tasks matching '" + keyword + "', sir.");
-                    } else {
-                        ui.show("Here are the matching tasks in your list:");
-                        ui.showTaskList(matches);
-                    }
-                    break;
-                }
+                    case "find": {
+                        // Asks every task whether its description contains the keyword,
+                        // mirroring how "on" asks every task about a date.
+                        String keyword = Parser.parseKeyword(input);
+                        List<Task> matches = new ArrayList<>();
+                        for (Task task : tasks) {
+                            if (task.descriptionContains(keyword)) {
+                                matches.add(task);
+                            }
+                        }
 
-                case "mark": {
-                    Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));
-                    task.markAsDone();
-                    save(storage, tasks, ui);
-                    ui.show("Fantastic! I've marked this task as done:");
-                    ui.showTask(task);
-                    break;
-                }
-
-                case "delete": {
-                    int index = Parser.parseTaskIndex(input, tasks.size());
-                    Task tmp = tasks.get(index);
-                    tasks.remove(index);
-                    save(storage, tasks, ui);
-                    ui.show("Fantastic! I've removed this task:");
-                    ui.showTask(tmp);
-                    ui.show("Now you have " + tasks.size() + " task(s) in your list");
-                    break;
-                }
-
-                case "unmark": {
-                    Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));
-                    task.markAsNotDone();
-                    save(storage, tasks, ui);
-                    ui.show("OK, it has been marked as undone:");
-                    ui.showTask(task);
-                    break;
-                }
-
-                case "todo":
-                case "deadline":
-                case "event": {
-                    if (tasks.size() == MAX_TASKS) {
-                        throw new AmadeusException("My list is full, a thousand apologies.");
+                        if (matches.isEmpty()) {
+                            ui.show("I found no tasks matching '" + keyword + "', sir.");
+                        } else {
+                            ui.show("Here are the matching tasks in your list:");
+                            ui.showTaskList(matches);
+                        }
+                        break;
                     }
 
-                    // The parser builds the right kind of Task and throws if the
-                    // line is malformed, so nothing is stored on a bad command.
-                    Task task;
-                    if (commandWord.equals("todo")) {
-                        task = Parser.parseTodo(input);
-                    } else if (commandWord.equals("deadline")) {
-                        task = Parser.parseDeadline(input);
-                    } else {
-                        task = Parser.parseEvent(input);
+                    case "mark": {
+                        Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));
+                        task.markAsDone();
+                        save(storage, tasks, ui);
+                        ui.show("Fantastic! I've marked this task as done:");
+                        ui.showTask(task);
+                        break;
                     }
 
-                    tasks.add(task);
-                    save(storage, tasks, ui);
+                    case "delete": {
+                        int index = Parser.parseTaskIndex(input, tasks.size());
+                        Task tmp = tasks.get(index);
+                        tasks.remove(index);
+                        save(storage, tasks, ui);
+                        ui.show("Fantastic! I've removed this task:");
+                        ui.showTask(tmp);
+                        ui.show("Now you have " + tasks.size() + " task(s) in your list");
+                        break;
+                    }
 
-                    ui.show("Got it added:");
-                    ui.showTask(task);
-                    ui.show("Now you have " + tasks.size() + " task(s) in your list");
-                    break;
-                }
+                    case "unmark": {
+                        Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));
+                        task.markAsNotDone();
+                        save(storage, tasks, ui);
+                        ui.show("OK, it has been marked as undone:");
+                        ui.showTask(task);
+                        break;
+                    }
 
-                default:
-                    throw new AmadeusException("A million apologies, I don't know what '"
-                            + commandWord + "' means.");
+                    case "todo":
+                    case "deadline":
+                    case "event": {
+                        if (tasks.size() == MAX_TASKS) {
+                            throw new AmadeusException("My list is full, a thousand apologies.");
+                        }
+
+                        // The parser builds the right kind of Task and throws if the
+                        // line is malformed, so nothing is stored on a bad command.
+                        Task task;
+                        if (commandWord.equals("todo")) {
+                            task = Parser.parseTodo(input);
+                        } else if (commandWord.equals("deadline")) {
+                            task = Parser.parseDeadline(input);
+                        } else {
+                            task = Parser.parseEvent(input);
+                        }
+
+                        tasks.add(task);
+                        save(storage, tasks, ui);
+
+                        ui.show("Got it added:");
+                        ui.showTask(task);
+                        ui.show("Now you have " + tasks.size() + " task(s) in your list");
+                        break;
+                    }
+
+                    default:
+                        throw new AmadeusException("A million apologies, I don't know what '"
+                                + commandWord + "' means.");
                 }
             } catch (AmadeusException e) {
                 // The exception message is written to be read by the user, so it

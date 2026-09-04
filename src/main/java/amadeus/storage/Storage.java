@@ -140,29 +140,29 @@ public class Storage {
         // The description and the times are checked here rather than in the Task
         // constructors because an empty one only ever means a damaged file.
         switch (type) {
-        case "T":
-            requireFieldCount(fields, TODO_FIELD_COUNT);
-            Todo todo = new Todo(requireNonEmpty(fields[2], "description"));
-            applyStatus(todo, fields[1]);
-            return todo;
+            case "T":
+                requireFieldCount(fields, TODO_FIELD_COUNT);
+                Todo todo = new Todo(requireNonEmpty(fields[2], "description"));
+                applyStatus(todo, fields[1]);
+                return todo;
 
-        case "D":
-            requireFieldCount(fields, DEADLINE_FIELD_COUNT);
-            Deadline deadline = new Deadline(requireNonEmpty(fields[2], "description"),
-                    requireDate(fields[3], "due date"));
-            applyStatus(deadline, fields[1]);
-            return deadline;
+            case "D":
+                requireFieldCount(fields, DEADLINE_FIELD_COUNT);
+                Deadline deadline = new Deadline(requireNonEmpty(fields[2], "description"),
+                        requireDate(fields[3], "due date"));
+                applyStatus(deadline, fields[1]);
+                return deadline;
 
-        case "E":
-            requireFieldCount(fields, EVENT_FIELD_COUNT);
-            Event event = new Event(requireNonEmpty(fields[2], "description"),
-                    requireDate(fields[3], "start date"),
-                    requireDate(fields[4], "end date"));
-            applyStatus(event, fields[1]);
-            return event;
+            case "E":
+                requireFieldCount(fields, EVENT_FIELD_COUNT);
+                Event event = new Event(requireNonEmpty(fields[2], "description"),
+                        requireDate(fields[3], "start date"),
+                        requireDate(fields[4], "end date"));
+                applyStatus(event, fields[1]);
+                return event;
 
-        default:
-            throw new AmadeusException("'" + type + "' is not a task type I recognise");
+            default:
+                throw new AmadeusException("'" + type + "' is not a task type I recognise");
         }
     }
 
