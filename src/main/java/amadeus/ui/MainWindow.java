@@ -83,6 +83,12 @@ public class MainWindow extends AnchorPane {
      */
     @FXML
     private void handleUserInput() {
+        // setAmadeus() runs in Main.start() right after the FXML is loaded and before
+        // stage.show(), so no user input can reach this handler before amadeus is set.
+        // The assertion documents that ordering instead of leaving it as something a
+        // reader has to trace through Main.java to confirm.
+        assert amadeus != null : "setAmadeus() must be called before the window can accept input";
+
         String input = userInput.getText();
         if (input.isBlank()) {
             return;

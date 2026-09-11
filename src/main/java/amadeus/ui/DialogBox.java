@@ -50,6 +50,13 @@ public class DialogBox extends HBox {
             System.err.println("Could not load a dialog box: " + e.getMessage());
         }
 
+        // A successful load() injects both @FXML fields by reflection before returning.
+        // If it failed instead, the catch above already reported why, so this documents
+        // that dependency rather than silently trusting it: with assertions enabled it
+        // fails loudly right here instead of as a confusing NullPointerException on the
+        // next line.
+        assert dialog != null && displayPicture != null
+                : "FXMLLoader.load() should have injected the @FXML fields";
         dialog.setText(text);
         displayPicture.setImage(img);
     }
