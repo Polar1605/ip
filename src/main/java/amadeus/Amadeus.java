@@ -236,12 +236,9 @@ public class Amadeus {
      */
     private List<String> describeMatches(Predicate<Task> predicate, IntFunction<String> header,
             String emptyMessage) {
-        List<Task> matches = new ArrayList<>();
-        for (Task task : tasks) {
-            if (predicate.test(task)) {
-                matches.add(task);
-            }
-        }
+        List<Task> matches = tasks.stream()
+                .filter(predicate)
+                .toList();
 
         List<String> lines = new ArrayList<>();
         if (matches.isEmpty()) {
