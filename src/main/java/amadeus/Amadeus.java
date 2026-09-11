@@ -259,7 +259,7 @@ public class Amadeus {
      * @throws AmadeusException if the task number is missing, not a number, or out of range.
      */
     private List<String> handleMark(String input) throws AmadeusException {
-        Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));
+        Task task = getTaskByNumber(input);
         task.markAsDone();
         List<String> lines = new ArrayList<>();
         save(lines);
@@ -274,7 +274,7 @@ public class Amadeus {
      * @throws AmadeusException if the task number is missing, not a number, or out of range.
      */
     private List<String> handleUnmark(String input) throws AmadeusException {
-        Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));
+        Task task = getTaskByNumber(input);
         task.markAsNotDone();
         List<String> lines = new ArrayList<>();
         save(lines);
@@ -289,15 +289,28 @@ public class Amadeus {
      * @throws AmadeusException if the task number is missing, not a number, or out of range.
      */
     private List<String> handleDelete(String input) throws AmadeusException {
-        int index = Parser.parseTaskIndex(input, tasks.size());
-        Task removed = tasks.get(index);
-        tasks.remove(index);
+        Task removed = getTaskByNumber(input);
+        tasks.remove(removed);
         List<String> lines = new ArrayList<>();
         save(lines);
         lines.add("Fantastic! I've removed this task:");
         addTask(lines, removed);
         lines.add("Now you have " + tasks.size() + " task(s) in your list");
         return lines;
+    }
+
+    /**
+     * Reads the task number out of a "mark"/"unmark"/"delete" command and returns the
+     * task it refers to.
+     * <p>
+     * All three commands start by parsing that number and looking up the same task
+     * before going on to do their own thing with it, so that shared first step is
+     * written once here instead of three times.
+     *
+     * @throws AmadeusException if the number is missing, not a number, or out of range.
+     */
+    private Task getTaskByNumber(String input) throws AmadeusException {
+        return tasks.get(Parser.parseTaskIndex(input, tasks.size()));
     }
 
     /**
