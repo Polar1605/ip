@@ -18,6 +18,12 @@ import javafx.stage.Stage;
  */
 public class Main extends Application {
 
+    /** Smallest height the window can be resized to, in pixels. */
+    private static final double MIN_WINDOW_HEIGHT = 220;
+
+    /** Smallest width the window can be resized to, in pixels. */
+    private static final double MIN_WINDOW_WIDTH = 417;
+
     private final Amadeus amadeus = new Amadeus();
 
     /**
@@ -34,8 +40,8 @@ public class Main extends Application {
             Scene scene = new Scene(root);
             stage.setScene(scene);
             stage.setTitle("Amadeus");
-            stage.setMinHeight(220);
-            stage.setMinWidth(417);
+            stage.setMinHeight(MIN_WINDOW_HEIGHT);
+            stage.setMinWidth(MIN_WINDOW_WIDTH);
 
             // The controller only exists once the FXML has been loaded, which is why the
             // chatbot is injected here rather than passed to a constructor.
