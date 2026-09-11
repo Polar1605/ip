@@ -3,6 +3,8 @@ package amadeus;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntFunction;
+import java.util.function.Predicate;
 
 import amadeus.parser.Parser;
 import amadeus.storage.Storage;
@@ -200,21 +202,9 @@ public class Amadeus {
      */
     private List<String> handleOn(String input) throws AmadeusException {
         LocalDate date = Parser.parseDate(input);
-        List<Task> matches = new ArrayList<>();
-        for (Task task : tasks) {
-            if (task.occursOn(date)) {
-                matches.add(task);
-            }
-        }
-
-        List<String> lines = new ArrayList<>();
-        if (matches.isEmpty()) {
-            lines.add("Nothing is happening on " + TaskDateTime.format(date) + ", sir.");
-        } else {
-            lines.add("Here are the " + matches.size() + " task(s) on " + TaskDateTime.format(date) + ":");
-            addTaskList(lines, matches);
-        }
-        return lines;
+        return describeMatches(task -> task.occursOn(date),
+                count -> "Here are the " + count + " task(s) on " + TaskDateTime.format(date) + ":",
+                "Nothing is happening on " + TaskDateTime.format(date) + ", sir.");
     }
 
     /**
@@ -225,18 +215,39 @@ public class Amadeus {
      */
     private List<String> handleFind(String input) throws AmadeusException {
         String keyword = Parser.parseKeyword(input);
+        return describeMatches(task -> task.descriptionContains(keyword),
+                count -> "Here are the matching tasks in your list:",
+                "I found no tasks matching '" + keyword + "', sir.");
+    }
+
+    /**
+     * Tests every task against the given predicate and returns the reply: either the
+     * given message when nothing matched, or the given header - built from how many
+     * did - followed by the matches as a numbered list.
+     * <p>
+     * {@link #handleOn(String)} and {@link #handleFind(String)} both reduce to exactly
+     * this shape - test every task against a question, then either say nothing
+     * matched or show what did - so the shape is written once here instead of once
+     * per command.
+     *
+     * @param predicate    decides whether a task matches.
+     * @param header       builds the line shown above the list, given how many matched.
+     * @param emptyMessage shown instead when nothing matched.
+     */
+    private List<String> describeMatches(Predicate<Task> predicate, IntFunction<String> header,
+            String emptyMessage) {
         List<Task> matches = new ArrayList<>();
         for (Task task : tasks) {
-            if (task.descriptionContains(keyword)) {
+            if (predicate.test(task)) {
                 matches.add(task);
             }
         }
 
         List<String> lines = new ArrayList<>();
         if (matches.isEmpty()) {
-            lines.add("I found no tasks matching '" + keyword + "', sir.");
+            lines.add(emptyMessage);
         } else {
-            lines.add("Here are the matching tasks in your list:");
+            lines.add(header.apply(matches.size()));
             addTaskList(lines, matches);
         }
         return lines;
