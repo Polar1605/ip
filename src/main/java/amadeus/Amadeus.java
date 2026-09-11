@@ -3,6 +3,8 @@ package amadeus;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntFunction;
+import java.util.function.Predicate;
 
 import amadeus.parser.Parser;
 import amadeus.storage.Storage;
@@ -153,123 +155,31 @@ public class Amadeus {
                     addTaskList(lines, tasks);
                     break;
 
-                case "on": {
-                    // Asks every task whether it falls on that day, so todos
-                    // (which have no date) simply answer no.
-                    LocalDate date = Parser.parseDate(input);
-                    List<Task> matches = new ArrayList<>();
-                    for (Task task : tasks) {
-                        if (task.occursOn(date)) {
-                            matches.add(task);
-                        }
-                    }
-
-                    if (matches.isEmpty()) {
-                        lines.add("Nothing is happening on " + TaskDateTime.format(date) + ", sir.");
-                    } else {
-                        lines.add("Here are the " + matches.size()
-                                + " task(s) on " + TaskDateTime.format(date) + ":");
-                        addTaskList(lines, matches);
-                    }
+                case "on":
+                    lines.addAll(handleOn(input));
                     break;
-                }
 
-                case "find": {
-                    // Asks every task whether its description contains the keyword,
-                    // mirroring how "on" asks every task about a date.
-                    String keyword = Parser.parseKeyword(input);
-                    List<Task> matches = new ArrayList<>();
-                    for (Task task : tasks) {
-                        if (task.descriptionContains(keyword)) {
-                            matches.add(task);
-                        }
-                    }
-
-                    if (matches.isEmpty()) {
-                        lines.add("I found no tasks matching '" + keyword + "', sir.");
-                    } else {
-                        lines.add("Here are the matching tasks in your list:");
-                        addTaskList(lines, matches);
-                    }
+                case "find":
+                    lines.addAll(handleFind(input));
                     break;
-                }
 
-                case "mark": {
-                    int index = Parser.parseTaskIndex(input, tasks.size());
-                    // parseTaskIndex() already checked the number the user typed against
-                    // tasks.size(), so index is guaranteed to be in range here; the get()
-                    // below cannot throw IndexOutOfBoundsException. The assertion makes
-                    // that guarantee explicit instead of leaving it as something the reader
-                    // has to trust by re-reading parseTaskIndex().
-                    assert index >= 0 && index < tasks.size()
-                            : "parseTaskIndex() should return an index within [0, tasks.size())";
-                    Task task = tasks.get(index);
-                    task.markAsDone();
-                    save(lines);
-                    lines.add("Fantastic! I've marked this task as done:");
-                    addTask(lines, task);
+                case "mark":
+                    lines.addAll(handleMark(input));
                     break;
-                }
 
-                case "delete": {
-                    int index = Parser.parseTaskIndex(input, tasks.size());
-                    assert index >= 0 && index < tasks.size()
-                            : "parseTaskIndex() should return an index within [0, tasks.size())";
-                    Task removed = tasks.get(index);
-                    tasks.remove(index);
-                    save(lines);
-                    lines.add("Fantastic! I've removed this task:");
-                    addTask(lines, removed);
-                    lines.add("Now you have " + tasks.size() + " task(s) in your list");
+                case "delete":
+                    lines.addAll(handleDelete(input));
                     break;
-                }
 
-                case "unmark": {
-                    int index = Parser.parseTaskIndex(input, tasks.size());
-                    assert index >= 0 && index < tasks.size()
-                            : "parseTaskIndex() should return an index within [0, tasks.size())";
-                    Task task = tasks.get(index);
-                    task.markAsNotDone();
-                    save(lines);
-                    lines.add("OK, it has been marked as undone:");
-                    addTask(lines, task);
+                case "unmark":
+                    lines.addAll(handleUnmark(input));
                     break;
-                }
 
                 case "todo":
                 case "deadline":
-                case "event": {
-                    if (tasks.size() == MAX_TASKS) {
-                        throw new AmadeusException("My list is full, a thousand apologies.");
-                    }
-
-                    // The parser builds the right kind of Task and throws if the
-                    // line is malformed, so nothing is stored on a bad command.
-                    Task task;
-                    if (commandWord.equals("todo")) {
-                        task = Parser.parseTodo(input);
-                    } else if (commandWord.equals("deadline")) {
-                        task = Parser.parseDeadline(input);
-                    } else {
-                        task = Parser.parseEvent(input);
-                    }
-
-                    tasks.add(task);
-                    // The guard above stops a task being added once the list is already at
-                    // MAX_TASKS, so from this method alone the list can never grow past it.
-                    // (It does not account for a save file edited by hand to already hold
-                    // more than MAX_TASKS tasks - Storage.load() applies no such limit -
-                    // which is a real gap in the guard above; the assertion is left in
-                    // place specifically so that case would be caught during testing
-                    // rather than pass silently.)
-                    assert tasks.size() <= MAX_TASKS : "task list grew past MAX_TASKS";
-                    save(lines);
-
-                    lines.add("Got it added:");
-                    addTask(lines, task);
-                    lines.add("Now you have " + tasks.size() + " task(s) in your list");
+                case "event":
+                    lines.addAll(handleNewTask(commandWord, input));
                     break;
-                }
 
                 default:
                     throw new AmadeusException("A million apologies, I don't know what '"
@@ -282,6 +192,172 @@ public class Amadeus {
         }
 
         return String.join("\n", lines);
+    }
+
+    /**
+     * Handles the "on" command: reports every task that falls on the given day.
+     * Todos have no date, so {@link Task#occursOn(LocalDate)} simply answers no for them.
+     *
+     * @throws AmadeusException if the date is missing or cannot be understood.
+     */
+    private List<String> handleOn(String input) throws AmadeusException {
+        LocalDate date = Parser.parseDate(input);
+        return describeMatches(task -> task.occursOn(date),
+                count -> "Here are the " + count + " task(s) on " + TaskDateTime.format(date) + ":",
+                "Nothing is happening on " + TaskDateTime.format(date) + ", sir.");
+    }
+
+    /**
+     * Handles the "find" command: reports every task whose description contains the
+     * keyword, mirroring how {@link #handleOn(String)} asks every task about a date.
+     *
+     * @throws AmadeusException if no keyword was given.
+     */
+    private List<String> handleFind(String input) throws AmadeusException {
+        String keyword = Parser.parseKeyword(input);
+        return describeMatches(task -> task.descriptionContains(keyword),
+                count -> "Here are the matching tasks in your list:",
+                "I found no tasks matching '" + keyword + "', sir.");
+    }
+
+    /**
+     * Tests every task against the given predicate and returns the reply: either the
+     * given message when nothing matched, or the given header - built from how many
+     * did - followed by the matches as a numbered list.
+     * <p>
+     * {@link #handleOn(String)} and {@link #handleFind(String)} both reduce to exactly
+     * this shape - test every task against a question, then either say nothing
+     * matched or show what did - so the shape is written once here instead of once
+     * per command.
+     *
+     * @param predicate    decides whether a task matches.
+     * @param header       builds the line shown above the list, given how many matched.
+     * @param emptyMessage shown instead when nothing matched.
+     */
+    private List<String> describeMatches(Predicate<Task> predicate, IntFunction<String> header,
+            String emptyMessage) {
+        List<Task> matches = new ArrayList<>();
+        for (Task task : tasks) {
+            if (predicate.test(task)) {
+                matches.add(task);
+            }
+        }
+
+        List<String> lines = new ArrayList<>();
+        if (matches.isEmpty()) {
+            lines.add(emptyMessage);
+        } else {
+            lines.add(header.apply(matches.size()));
+            addTaskList(lines, matches);
+        }
+        return lines;
+    }
+
+    /**
+     * Handles the "mark" command: marks the given task as done.
+     *
+     * @throws AmadeusException if the task number is missing, not a number, or out of range.
+     */
+    private List<String> handleMark(String input) throws AmadeusException {
+        Task task = getTaskByNumber(input);
+        task.markAsDone();
+        List<String> lines = new ArrayList<>();
+        save(lines);
+        lines.add("Fantastic! I've marked this task as done:");
+        addTask(lines, task);
+        return lines;
+    }
+
+    /**
+     * Handles the "unmark" command: marks the given task as not yet done.
+     *
+     * @throws AmadeusException if the task number is missing, not a number, or out of range.
+     */
+    private List<String> handleUnmark(String input) throws AmadeusException {
+        Task task = getTaskByNumber(input);
+        task.markAsNotDone();
+        List<String> lines = new ArrayList<>();
+        save(lines);
+        lines.add("OK, it has been marked as undone:");
+        addTask(lines, task);
+        return lines;
+    }
+
+    /**
+     * Handles the "delete" command: removes the given task from the list.
+     *
+     * @throws AmadeusException if the task number is missing, not a number, or out of range.
+     */
+    private List<String> handleDelete(String input) throws AmadeusException {
+        Task removed = getTaskByNumber(input);
+        tasks.remove(removed);
+        List<String> lines = new ArrayList<>();
+        save(lines);
+        lines.add("Fantastic! I've removed this task:");
+        addTask(lines, removed);
+        lines.add("Now you have " + tasks.size() + " task(s) in your list");
+        return lines;
+    }
+
+    /**
+     * Reads the task number out of a "mark"/"unmark"/"delete" command and returns the
+     * task it refers to.
+     * <p>
+     * All three commands start by parsing that number and looking up the same task
+     * before going on to do their own thing with it, so that shared first step is
+     * written once here instead of three times.
+     *
+     * @throws AmadeusException if the number is missing, not a number, or out of range.
+     */
+    private Task getTaskByNumber(String input) throws AmadeusException {
+        int index = Parser.parseTaskIndex(input, tasks.size());
+        // parseTaskIndex() already checked the number the user typed against
+        // tasks.size(), so index is guaranteed to be in range here; the get() below
+        // cannot throw IndexOutOfBoundsException. The assertion makes that guarantee
+        // explicit instead of leaving it as something the reader has to trust by
+        // re-reading parseTaskIndex().
+        assert index >= 0 && index < tasks.size()
+                : "parseTaskIndex() should return an index within [0, tasks.size())";
+        return tasks.get(index);
+    }
+
+    /**
+     * Handles the "todo", "deadline" and "event" commands: parses and adds the new task.
+     *
+     * @param commandWord which of the three commands this is.
+     * @param input       the whole line the user typed.
+     * @throws AmadeusException if the list is already full, or the line is malformed.
+     */
+    private List<String> handleNewTask(String commandWord, String input) throws AmadeusException {
+        if (tasks.size() == MAX_TASKS) {
+            throw new AmadeusException("My list is full, a thousand apologies.");
+        }
+
+        // The parser builds the right kind of Task and throws if the line is
+        // malformed, so nothing is stored on a bad command.
+        Task task;
+        if (commandWord.equals("todo")) {
+            task = Parser.parseTodo(input);
+        } else if (commandWord.equals("deadline")) {
+            task = Parser.parseDeadline(input);
+        } else {
+            task = Parser.parseEvent(input);
+        }
+
+        tasks.add(task);
+        // The guard above stops a task being added once the list is already at
+        // MAX_TASKS, so from this method alone the list can never grow past it.
+        // (It does not account for a save file edited by hand to already hold more
+        // than MAX_TASKS tasks - Storage.load() applies no such limit - which is a
+        // real gap in the guard above; the assertion is left in place specifically
+        // so that case would be caught during testing rather than pass silently.)
+        assert tasks.size() <= MAX_TASKS : "task list grew past MAX_TASKS";
+        List<String> lines = new ArrayList<>();
+        save(lines);
+        lines.add("Got it added:");
+        addTask(lines, task);
+        lines.add("Now you have " + tasks.size() + " task(s) in your list");
+        return lines;
     }
 
     /**
