@@ -1,6 +1,10 @@
 package amadeus.parser;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import amadeus.AmadeusException;
 import amadeus.task.Deadline;
@@ -22,6 +26,9 @@ import amadeus.task.Todo;
  * Every method is static because a Parser has nothing to remember between calls.
  */
 public class Parser {
+
+    /** Matches one "#word" tag, e.g. "#fun"; "#" on its own is not a tag. */
+    private static final Pattern TAG_PATTERN = Pattern.compile("#\\w+");
 
     /**
      * Returns the first word of the input, which tells us which command the user wants.
@@ -48,29 +55,59 @@ public class Parser {
     }
 
     /**
-     * Returns the todo described by a line of the form {@code todo <description>}.
+     * Pulls every "#word" tag out of the given text.
+     * <p>
+     * A tag can appear anywhere on the line - before, after, or in between the
+     * other parts of the command - so this runs once on the whole argument text
+     * before that text is split up any further.
      *
-     * @param input the whole line the user typed, e.g. "todo read book".
-     * @return a new todo, not yet done.
+     * @param text the text to search, e.g. "read book #fun".
+     * @return the text with every tag removed, and the tags found, in the order
+     *         they appeared.
+     */
+    private static ParsedTags extractTags(String text) {
+        List<String> tags = new ArrayList<>();
+        Matcher matcher = TAG_PATTERN.matcher(text);
+        while (matcher.find()) {
+            tags.add(matcher.group());
+        }
+        String remaining = matcher.replaceAll("").trim().replaceAll("\\s+", " ");
+        return new ParsedTags(remaining, tags);
+    }
+
+    /** The result of {@link #extractTags(String)}: the text with tags removed, and the tags themselves. */
+    private record ParsedTags(String remainingText, List<String> tags) {
+    }
+
+    /**
+     * Returns the todo described by a line of the form
+     * {@code todo <description> [#tag...]}.
+     *
+     * @param input the whole line the user typed, e.g. "todo read book #fun".
+     * @return a new todo, not yet done, with any tags found attached.
      * @throws AmadeusException if the description is missing.
      */
     public static Todo parseTodo(String input) throws AmadeusException {
-        String description = parseArguments(input);
+        ParsedTags parsed = extractTags(parseArguments(input));
+        String description = parsed.remainingText();
         if (description.isEmpty()) {
             throw new AmadeusException("A hundred apologies, a todo needs a description.",
                     "Please use: todo <description>");
         }
-        return new Todo(description);
+        Todo todo = new Todo(description);
+        todo.setTags(parsed.tags());
+        return todo;
     }
 
     /**
-     * Parses a line of the form {@code deadline <description> /by <date>}.
+     * Parses a line of the form {@code deadline <description> /by <date> [#tag...]}.
      *
      * @throws AmadeusException if the description, the "/by" marker, or the date is
      *                          missing, or if the date cannot be understood
      */
     public static Deadline parseDeadline(String input) throws AmadeusException {
-        String arguments = parseArguments(input);
+        ParsedTags parsed = extractTags(parseArguments(input));
+        String arguments = parsed.remainingText();
         int byIdx = arguments.indexOf("/by");
         if (byIdx == -1) {
             throw new AmadeusException("Ten thousand apologies, a deadline needs a '/by'.",
@@ -91,17 +128,21 @@ public class Parser {
         }
         // TaskDateTime.parse throws if the text is not a date it recognises, so a
         // Deadline can never be built with a due date the app cannot understand.
-        return new Deadline(description, TaskDateTime.parse(by));
+        Deadline deadline = new Deadline(description, TaskDateTime.parse(by));
+        deadline.setTags(parsed.tags());
+        return deadline;
     }
 
     /**
-     * Parses a line of the form {@code event <description> /from <start> /to <end>}.
+     * Parses a line of the form
+     * {@code event <description> /from <start> /to <end> [#tag...]}.
      *
      * @throws AmadeusException if any of the three parts is missing, if "/to"
      *                          appears before "/from", or if a date cannot be understood
      */
     public static Event parseEvent(String input) throws AmadeusException {
-        String arguments = parseArguments(input);
+        ParsedTags parsed = extractTags(parseArguments(input));
+        String arguments = parsed.remainingText();
         int fromIdx = arguments.indexOf("/from");
         int toIdx = arguments.indexOf("/to");
 
@@ -127,7 +168,9 @@ public class Parser {
             throw new AmadeusException("A hundred apologies, an event needs both a start and an end time.",
                     "Please use: event <description> /from <start> /to <end>");
         }
-        return new Event(description, TaskDateTime.parse(start), TaskDateTime.parse(end));
+        Event event = new Event(description, TaskDateTime.parse(start), TaskDateTime.parse(end));
+        event.setTags(parsed.tags());
+        return event;
     }
 
     /**

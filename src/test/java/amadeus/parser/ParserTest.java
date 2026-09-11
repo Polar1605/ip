@@ -2,10 +2,15 @@ package amadeus.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
 import amadeus.AmadeusException;
+import amadeus.task.Deadline;
+import amadeus.task.Todo;
 
 /**
  * Unit tests for {@link Parser#parseTaskIndex(String, int)}.
@@ -53,5 +58,42 @@ public class ParserTest {
     @Test
     void parseTaskIndex_notANumber_throwsAmadeusException() {
         assertThrows(AmadeusException.class, () -> Parser.parseTaskIndex("mark two", 3));
+    }
+
+    /** A todo typed without any "#word" gets no tags. */
+    @Test
+    void parseTodo_noHashtag_hasNoTags() throws AmadeusException {
+        assertTrue(Parser.parseTodo("todo read book").getTags().isEmpty());
+    }
+
+    /** The hashtag is pulled out of the description rather than left as part of it. */
+    @Test
+    void parseTodo_trailingHashtag_stripsTagFromDescription() throws AmadeusException {
+        Todo todo = Parser.parseTodo("todo read book #fun");
+        assertEquals("read book", todo.getDescription());
+        assertEquals(List.of("#fun"), todo.getTags());
+    }
+
+    /** A tag can appear anywhere in the line, not only at the end. */
+    @Test
+    void parseTodo_leadingHashtag_stripsTagFromDescription() throws AmadeusException {
+        Todo todo = Parser.parseTodo("todo #fun read book");
+        assertEquals("read book", todo.getDescription());
+        assertEquals(List.of("#fun"), todo.getTags());
+    }
+
+    @Test
+    void parseTodo_multipleHashtags_collectsAllTags() throws AmadeusException {
+        Todo todo = Parser.parseTodo("todo read book #fun #urgent");
+        assertEquals("read book", todo.getDescription());
+        assertEquals(List.of("#fun", "#urgent"), todo.getTags());
+    }
+
+    /** A tag can sit anywhere on the line, including inside the "/by" portion. */
+    @Test
+    void parseDeadline_hashtagAfterBy_stripsTagAndKeepsDate() throws AmadeusException {
+        Deadline deadline = Parser.parseDeadline("deadline return book /by 2019-06-06 #urgent");
+        assertEquals("return book", deadline.getDescription());
+        assertEquals(List.of("#urgent"), deadline.getTags());
     }
 }

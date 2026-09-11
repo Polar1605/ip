@@ -46,10 +46,18 @@ public class Storage {
      */
     private static final String FIELD_SEPARATOR_PATTERN = "\\s*\\|\\s*";
 
-    /** How many fields a line of each task type is expected to have. */
+    /**
+     * How many fields a line of each task type has when it carries no tags.
+     * A line may also carry one extra, trailing field holding its comma-joined
+     * tags, e.g. "T | 0 | read book | #fun,#urgent" - so a file saved before
+     * tagging existed, with none of these extra fields, still loads correctly.
+     */
     private static final int TODO_FIELD_COUNT = 3;
     private static final int DEADLINE_FIELD_COUNT = 4;
     private static final int EVENT_FIELD_COUNT = 5;
+
+    /** Separator written between tags within the tag field, e.g. "#fun,#urgent". */
+    private static final String TAG_SEPARATOR = ",";
 
     /** Where the tasks are stored, relative to the folder the app is run from. */
     private final Path filePath;
@@ -145,31 +153,47 @@ public class Storage {
 
         // The description and the times are checked here rather than in the Task
         // constructors because an empty one only ever means a damaged file.
+        Task task;
+        int baseFieldCount;
         switch (type) {
             case "T":
-                requireFieldCount(fields, TODO_FIELD_COUNT);
+                baseFieldCount = TODO_FIELD_COUNT;
+                requireFieldCount(fields, baseFieldCount);
                 Todo todo = new Todo(requireNonEmpty(fields[2], "description"));
                 applyStatus(todo, fields[1]);
-                return todo;
+                task = todo;
+                break;
 
             case "D":
-                requireFieldCount(fields, DEADLINE_FIELD_COUNT);
+                baseFieldCount = DEADLINE_FIELD_COUNT;
+                requireFieldCount(fields, baseFieldCount);
                 Deadline deadline = new Deadline(requireNonEmpty(fields[2], "description"),
                         requireDate(fields[3], "due date"));
                 applyStatus(deadline, fields[1]);
-                return deadline;
+                task = deadline;
+                break;
 
             case "E":
-                requireFieldCount(fields, EVENT_FIELD_COUNT);
+                baseFieldCount = EVENT_FIELD_COUNT;
+                requireFieldCount(fields, baseFieldCount);
                 Event event = new Event(requireNonEmpty(fields[2], "description"),
                         requireDate(fields[3], "start date"),
                         requireDate(fields[4], "end date"));
                 applyStatus(event, fields[1]);
-                return event;
+                task = event;
+                break;
 
             default:
                 throw new AmadeusException("'" + type + "' is not a task type I recognise");
         }
+
+        // The tag field, when present, is always the one field past the type's own
+        // fields, regardless of type - so it can be handled once here rather than
+        // once per case above.
+        if (fields.length == baseFieldCount + 1) {
+            task.setTags(decodeTags(fields[baseFieldCount]));
+        }
+        return task;
     }
 
     /**
@@ -188,11 +212,28 @@ public class Storage {
         return type + ": " + reason;
     }
 
-    /** @throws AmadeusException if the line does not have exactly the expected number of fields */
-    private static void requireFieldCount(String[] fields, int expected) throws AmadeusException {
-        if (fields.length != expected) {
-            throw new AmadeusException("expected " + expected + " fields but found " + fields.length);
+    /**
+     * Checks the line has the number of fields a task of this type needs, allowing
+     * one extra trailing field for tags, since that field is optional.
+     *
+     * @throws AmadeusException if the line has neither {@code baseCount} nor {@code baseCount + 1} fields
+     */
+    private static void requireFieldCount(String[] fields, int baseCount) throws AmadeusException {
+        if (fields.length != baseCount && fields.length != baseCount + 1) {
+            throw new AmadeusException("expected " + baseCount + " or " + (baseCount + 1)
+                    + " fields but found " + fields.length);
         }
+    }
+
+    /**
+     * Splits a saved tag field back into individual tags, e.g. "#fun,#urgent"
+     * becomes {@code ["#fun", "#urgent"]}.
+     *
+     * @param field the tag field, e.g. "#fun,#urgent".
+     * @return the tags it holds, in the order they were saved.
+     */
+    private static List<String> decodeTags(String field) {
+        return List.of(field.split(TAG_SEPARATOR));
     }
 
     /**
@@ -280,14 +321,20 @@ public class Storage {
         // A Todo needs no extra fields, so that branch binds no variable.
         String head = FIELD_SEPARATOR + (task.isDone() ? "1" : "0")
                 + FIELD_SEPARATOR + task.getDescription();
+        // Untagged tasks - almost all of them, today - are written with no trailing
+        // field at all, so a file with no tagged tasks looks exactly as it did
+        // before tagging existed.
+        String tagsField = task.getTags().isEmpty()
+                ? ""
+                : FIELD_SEPARATOR + String.join(TAG_SEPARATOR, task.getTags());
 
         if (task instanceof Todo) {
-            return "T" + head;
+            return "T" + head + tagsField;
         } else if (task instanceof Deadline deadline) {
-            return "D" + head + FIELD_SEPARATOR + deadline.getBy().toStorageString();
+            return "D" + head + FIELD_SEPARATOR + deadline.getBy().toStorageString() + tagsField;
         } else if (task instanceof Event event) {
             return "E" + head + FIELD_SEPARATOR + event.getStart().toStorageString()
-                    + FIELD_SEPARATOR + event.getEnd().toStorageString();
+                    + FIELD_SEPARATOR + event.getEnd().toStorageString() + tagsField;
         } else {
             throw new AmadeusException("A thousand apologies, I do not know how to save a "
                     + task.getClass().getSimpleName() + ".");

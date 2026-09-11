@@ -1,6 +1,9 @@
 package amadeus.task;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A single entry in the task list.
@@ -16,6 +19,12 @@ public class Task {
     protected Status status;
 
     /**
+     * Tags attached to this task, e.g. "#fun". Tagging is optional, so a freshly
+     * created task starts with none.
+     */
+    protected List<String> tags = new ArrayList<>();
+
+    /**
      * Creates a task that starts off not done, which is the only sensible state
      * for a task the user has just typed in.
      *
@@ -29,6 +38,24 @@ public class Task {
     /** Returns the task's description, e.g. "read book". */
     public String getDescription() {
         return description;
+    }
+
+    /** Returns the task's tags, e.g. {@code ["#fun", "#urgent"]}; empty if none were given. */
+    public List<String> getTags() {
+        return Collections.unmodifiableList(tags);
+    }
+
+    /**
+     * Replaces this task's tags.
+     * <p>
+     * Tags are set after construction, the same way {@link #markAsDone()} changes
+     * status after construction, rather than through the constructor - the parser
+     * builds the task first and only then knows which "#word" tokens it found.
+     *
+     * @param tags the tags to attach, e.g. {@code ["#fun", "#urgent"]}.
+     */
+    public void setTags(List<String> tags) {
+        this.tags = new ArrayList<>(tags);
     }
 
     /**
@@ -83,11 +110,13 @@ public class Task {
     }
 
     /**
-     * Returns the task as the user sees it, e.g. "[ ] read book".
+     * Returns the task as the user sees it, e.g. "[ ] read book" or, with tags,
+     * "[ ] read book [#fun, #urgent]".
      * Each subclass prefixes its own tag to this, e.g. "[T]" for a todo.
      */
     @Override
     public String toString() {
-        return "[" + this.getStatusIcon() + "] " + description;
+        String tagSuffix = tags.isEmpty() ? "" : " [" + String.join(", ", tags) + "]";
+        return "[" + this.getStatusIcon() + "] " + description + tagSuffix;
     }
 }
