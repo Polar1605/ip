@@ -157,12 +157,9 @@ public class Amadeus {
                     // Asks every task whether it falls on that day, so todos
                     // (which have no date) simply answer no.
                     LocalDate date = Parser.parseDate(input);
-                    List<Task> matches = new ArrayList<>();
-                    for (Task task : tasks) {
-                        if (task.occursOn(date)) {
-                            matches.add(task);
-                        }
-                    }
+                    List<Task> matches = tasks.stream()
+                            .filter(task -> task.occursOn(date))
+                            .toList();
 
                     if (matches.isEmpty()) {
                         lines.add("Nothing is happening on " + TaskDateTime.format(date) + ", sir.");
@@ -178,12 +175,9 @@ public class Amadeus {
                     // Asks every task whether its description contains the keyword,
                     // mirroring how "on" asks every task about a date.
                     String keyword = Parser.parseKeyword(input);
-                    List<Task> matches = new ArrayList<>();
-                    for (Task task : tasks) {
-                        if (task.descriptionContains(keyword)) {
-                            matches.add(task);
-                        }
-                    }
+                    List<Task> matches = tasks.stream()
+                            .filter(task -> task.descriptionContains(keyword))
+                            .toList();
 
                     if (matches.isEmpty()) {
                         lines.add("I found no tasks matching '" + keyword + "', sir.");
