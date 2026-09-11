@@ -153,102 +153,31 @@ public class Amadeus {
                     addTaskList(lines, tasks);
                     break;
 
-                case "on": {
-                    // Asks every task whether it falls on that day, so todos
-                    // (which have no date) simply answer no.
-                    LocalDate date = Parser.parseDate(input);
-                    List<Task> matches = new ArrayList<>();
-                    for (Task task : tasks) {
-                        if (task.occursOn(date)) {
-                            matches.add(task);
-                        }
-                    }
-
-                    if (matches.isEmpty()) {
-                        lines.add("Nothing is happening on " + TaskDateTime.format(date) + ", sir.");
-                    } else {
-                        lines.add("Here are the " + matches.size()
-                                + " task(s) on " + TaskDateTime.format(date) + ":");
-                        addTaskList(lines, matches);
-                    }
+                case "on":
+                    lines.addAll(handleOn(input));
                     break;
-                }
 
-                case "find": {
-                    // Asks every task whether its description contains the keyword,
-                    // mirroring how "on" asks every task about a date.
-                    String keyword = Parser.parseKeyword(input);
-                    List<Task> matches = new ArrayList<>();
-                    for (Task task : tasks) {
-                        if (task.descriptionContains(keyword)) {
-                            matches.add(task);
-                        }
-                    }
-
-                    if (matches.isEmpty()) {
-                        lines.add("I found no tasks matching '" + keyword + "', sir.");
-                    } else {
-                        lines.add("Here are the matching tasks in your list:");
-                        addTaskList(lines, matches);
-                    }
+                case "find":
+                    lines.addAll(handleFind(input));
                     break;
-                }
 
-                case "mark": {
-                    Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));
-                    task.markAsDone();
-                    save(lines);
-                    lines.add("Fantastic! I've marked this task as done:");
-                    addTask(lines, task);
+                case "mark":
+                    lines.addAll(handleMark(input));
                     break;
-                }
 
-                case "delete": {
-                    int index = Parser.parseTaskIndex(input, tasks.size());
-                    Task removed = tasks.get(index);
-                    tasks.remove(index);
-                    save(lines);
-                    lines.add("Fantastic! I've removed this task:");
-                    addTask(lines, removed);
-                    lines.add("Now you have " + tasks.size() + " task(s) in your list");
+                case "delete":
+                    lines.addAll(handleDelete(input));
                     break;
-                }
 
-                case "unmark": {
-                    Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));
-                    task.markAsNotDone();
-                    save(lines);
-                    lines.add("OK, it has been marked as undone:");
-                    addTask(lines, task);
+                case "unmark":
+                    lines.addAll(handleUnmark(input));
                     break;
-                }
 
                 case "todo":
                 case "deadline":
-                case "event": {
-                    if (tasks.size() == MAX_TASKS) {
-                        throw new AmadeusException("My list is full, a thousand apologies.");
-                    }
-
-                    // The parser builds the right kind of Task and throws if the
-                    // line is malformed, so nothing is stored on a bad command.
-                    Task task;
-                    if (commandWord.equals("todo")) {
-                        task = Parser.parseTodo(input);
-                    } else if (commandWord.equals("deadline")) {
-                        task = Parser.parseDeadline(input);
-                    } else {
-                        task = Parser.parseEvent(input);
-                    }
-
-                    tasks.add(task);
-                    save(lines);
-
-                    lines.add("Got it added:");
-                    addTask(lines, task);
-                    lines.add("Now you have " + tasks.size() + " task(s) in your list");
+                case "event":
+                    lines.addAll(handleNewTask(commandWord, input));
                     break;
-                }
 
                 default:
                     throw new AmadeusException("A million apologies, I don't know what '"
@@ -261,6 +190,135 @@ public class Amadeus {
         }
 
         return String.join("\n", lines);
+    }
+
+    /**
+     * Handles the "on" command: reports every task that falls on the given day.
+     * Todos have no date, so {@link Task#occursOn(LocalDate)} simply answers no for them.
+     *
+     * @throws AmadeusException if the date is missing or cannot be understood.
+     */
+    private List<String> handleOn(String input) throws AmadeusException {
+        LocalDate date = Parser.parseDate(input);
+        List<Task> matches = new ArrayList<>();
+        for (Task task : tasks) {
+            if (task.occursOn(date)) {
+                matches.add(task);
+            }
+        }
+
+        List<String> lines = new ArrayList<>();
+        if (matches.isEmpty()) {
+            lines.add("Nothing is happening on " + TaskDateTime.format(date) + ", sir.");
+        } else {
+            lines.add("Here are the " + matches.size() + " task(s) on " + TaskDateTime.format(date) + ":");
+            addTaskList(lines, matches);
+        }
+        return lines;
+    }
+
+    /**
+     * Handles the "find" command: reports every task whose description contains the
+     * keyword, mirroring how {@link #handleOn(String)} asks every task about a date.
+     *
+     * @throws AmadeusException if no keyword was given.
+     */
+    private List<String> handleFind(String input) throws AmadeusException {
+        String keyword = Parser.parseKeyword(input);
+        List<Task> matches = new ArrayList<>();
+        for (Task task : tasks) {
+            if (task.descriptionContains(keyword)) {
+                matches.add(task);
+            }
+        }
+
+        List<String> lines = new ArrayList<>();
+        if (matches.isEmpty()) {
+            lines.add("I found no tasks matching '" + keyword + "', sir.");
+        } else {
+            lines.add("Here are the matching tasks in your list:");
+            addTaskList(lines, matches);
+        }
+        return lines;
+    }
+
+    /**
+     * Handles the "mark" command: marks the given task as done.
+     *
+     * @throws AmadeusException if the task number is missing, not a number, or out of range.
+     */
+    private List<String> handleMark(String input) throws AmadeusException {
+        Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));
+        task.markAsDone();
+        List<String> lines = new ArrayList<>();
+        save(lines);
+        lines.add("Fantastic! I've marked this task as done:");
+        addTask(lines, task);
+        return lines;
+    }
+
+    /**
+     * Handles the "unmark" command: marks the given task as not yet done.
+     *
+     * @throws AmadeusException if the task number is missing, not a number, or out of range.
+     */
+    private List<String> handleUnmark(String input) throws AmadeusException {
+        Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));
+        task.markAsNotDone();
+        List<String> lines = new ArrayList<>();
+        save(lines);
+        lines.add("OK, it has been marked as undone:");
+        addTask(lines, task);
+        return lines;
+    }
+
+    /**
+     * Handles the "delete" command: removes the given task from the list.
+     *
+     * @throws AmadeusException if the task number is missing, not a number, or out of range.
+     */
+    private List<String> handleDelete(String input) throws AmadeusException {
+        int index = Parser.parseTaskIndex(input, tasks.size());
+        Task removed = tasks.get(index);
+        tasks.remove(index);
+        List<String> lines = new ArrayList<>();
+        save(lines);
+        lines.add("Fantastic! I've removed this task:");
+        addTask(lines, removed);
+        lines.add("Now you have " + tasks.size() + " task(s) in your list");
+        return lines;
+    }
+
+    /**
+     * Handles the "todo", "deadline" and "event" commands: parses and adds the new task.
+     *
+     * @param commandWord which of the three commands this is.
+     * @param input       the whole line the user typed.
+     * @throws AmadeusException if the list is already full, or the line is malformed.
+     */
+    private List<String> handleNewTask(String commandWord, String input) throws AmadeusException {
+        if (tasks.size() == MAX_TASKS) {
+            throw new AmadeusException("My list is full, a thousand apologies.");
+        }
+
+        // The parser builds the right kind of Task and throws if the line is
+        // malformed, so nothing is stored on a bad command.
+        Task task;
+        if (commandWord.equals("todo")) {
+            task = Parser.parseTodo(input);
+        } else if (commandWord.equals("deadline")) {
+            task = Parser.parseDeadline(input);
+        } else {
+            task = Parser.parseEvent(input);
+        }
+
+        tasks.add(task);
+        List<String> lines = new ArrayList<>();
+        save(lines);
+        lines.add("Got it added:");
+        addTask(lines, task);
+        lines.add("Now you have " + tasks.size() + " task(s) in your list");
+        return lines;
     }
 
     /**
