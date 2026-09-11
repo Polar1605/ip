@@ -135,6 +135,11 @@ public class Storage {
      * @throws AmadeusException if the line does not follow the expected format
      */
     private static Task decodeTask(String line) throws AmadeusException {
+        // load() is the only caller, and it trims each line and skips blank ones before
+        // calling this, so a blank line reaching here would mean that filtering broke -
+        // an internal bug, not a malformed file - which is what assert is for, as
+        // opposed to the AmadeusExceptions below that report problems in the file itself.
+        assert !line.isEmpty() : "decodeTask() should never be called with a blank line";
         String[] fields = line.split(FIELD_SEPARATOR_PATTERN);
         String type = fields[0];
 

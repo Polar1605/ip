@@ -73,5 +73,11 @@ shadowJar {
 
 run {
     standardInput = System.in
+    // Java assertions are off by default (JVM -ea flag), and Gradle's JavaExec
+    // tasks - which "run" is - do not turn them on either, unlike the "test" task,
+    // which enables them automatically. Turning them on here means the assert
+    // statements sprinkled through the code actually run when developing with
+    // "./gradlew run", instead of silently doing nothing.
+    enableAssertions = true
 }
 

@@ -195,7 +195,15 @@ public class Amadeus {
                 }
 
                 case "mark": {
-                    Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));
+                    int index = Parser.parseTaskIndex(input, tasks.size());
+                    // parseTaskIndex() already checked the number the user typed against
+                    // tasks.size(), so index is guaranteed to be in range here; the get()
+                    // below cannot throw IndexOutOfBoundsException. The assertion makes
+                    // that guarantee explicit instead of leaving it as something the reader
+                    // has to trust by re-reading parseTaskIndex().
+                    assert index >= 0 && index < tasks.size()
+                            : "parseTaskIndex() should return an index within [0, tasks.size())";
+                    Task task = tasks.get(index);
                     task.markAsDone();
                     save(lines);
                     lines.add("Fantastic! I've marked this task as done:");
@@ -205,6 +213,8 @@ public class Amadeus {
 
                 case "delete": {
                     int index = Parser.parseTaskIndex(input, tasks.size());
+                    assert index >= 0 && index < tasks.size()
+                            : "parseTaskIndex() should return an index within [0, tasks.size())";
                     Task removed = tasks.get(index);
                     tasks.remove(index);
                     save(lines);
@@ -215,7 +225,10 @@ public class Amadeus {
                 }
 
                 case "unmark": {
-                    Task task = tasks.get(Parser.parseTaskIndex(input, tasks.size()));
+                    int index = Parser.parseTaskIndex(input, tasks.size());
+                    assert index >= 0 && index < tasks.size()
+                            : "parseTaskIndex() should return an index within [0, tasks.size())";
+                    Task task = tasks.get(index);
                     task.markAsNotDone();
                     save(lines);
                     lines.add("OK, it has been marked as undone:");
@@ -242,6 +255,14 @@ public class Amadeus {
                     }
 
                     tasks.add(task);
+                    // The guard above stops a task being added once the list is already at
+                    // MAX_TASKS, so from this method alone the list can never grow past it.
+                    // (It does not account for a save file edited by hand to already hold
+                    // more than MAX_TASKS tasks - Storage.load() applies no such limit -
+                    // which is a real gap in the guard above; the assertion is left in
+                    // place specifically so that case would be caught during testing
+                    // rather than pass silently.)
+                    assert tasks.size() <= MAX_TASKS : "task list grew past MAX_TASKS";
                     save(lines);
 
                     lines.add("Got it added:");
