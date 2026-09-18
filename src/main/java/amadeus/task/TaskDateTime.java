@@ -115,7 +115,7 @@ public class TaskDateTime {
                 // Not this format either.
             }
         }
-        throw new AmadeusException("A hundred apologies, I cannot read '" + input + "' as a date.",
+        throw new AmadeusException("A hundred apologies, I cannot read '" + input + "' as a date, sir.",
                 "Please use one of: " + EXAMPLE_FORMATS);
     }
 
