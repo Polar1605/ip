@@ -1,8 +1,3 @@
----
-title: Amadeus User Guide
-permalink: /
----
-
 # Amadeus User Guide
 
 Amadeus is a desktop chatbot that keeps track of your todos, deadlines, and events. It's
@@ -180,8 +175,3 @@ reply. Nothing you typed is lost; just try the command again.
 | Find | `find KEYWORD` | `find report` |
 | On | `on DATE` | `on 2019-10-15` |
 | Bye | `bye` | `bye` |
-
-## Acknowledgements
-
-Claude Code was used after handcoding a prototype, to help improve code structure and
-catch edge cases that might otherwise have been missed.
