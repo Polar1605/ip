@@ -36,7 +36,7 @@
         -->
         <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="app-header">
             <children>
-                <ImageView fitHeight="30.0" fitWidth="30.0" preserveRatio="true">
+                <ImageView fitHeight="44.0" fitWidth="44.0" preserveRatio="true">
                     <image>
                         <Image url="@../images/DaAmadeus.png" />
                     </image>
