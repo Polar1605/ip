@@ -48,7 +48,7 @@ public class Ui {
     public void showWelcome() {
         showLine();
         System.out.println(BANNER);
-        System.out.println("Hello I'm " + NAME + ".");
+        System.out.println("Hello I'm " + NAME + ", sir.");
         System.out.println("Sir what do you need assistance with");
         showLine();
     }

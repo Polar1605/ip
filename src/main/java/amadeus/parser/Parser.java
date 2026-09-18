@@ -36,7 +36,7 @@ public class Parser {
     public static String parseCommandWord(String input) throws AmadeusException {
         String trimmed = input.trim();
         if (trimmed.isEmpty()) {
-            throw new AmadeusException("A thousand apologies, you haven't told me anything yet.");
+            throw new AmadeusException("A thousand apologies, you haven't told me anything yet, sir.");
         }
         // "\\s+" splits on any run of whitespace, and the limit of 2 stops the
         // split after the first word so the rest of the line stays in one piece.
@@ -91,7 +91,7 @@ public class Parser {
         ParsedTags parsed = extractTags(parseArguments(input));
         String description = parsed.remainingText();
         if (description.isEmpty()) {
-            throw new AmadeusException("A hundred apologies, a todo needs a description.",
+            throw new AmadeusException("A hundred apologies, a todo needs a description, sir.",
                     "Please use: todo <description>");
         }
         Todo todo = new Todo(description);
@@ -110,7 +110,7 @@ public class Parser {
         String arguments = parsed.remainingText();
         int byIdx = arguments.indexOf("/by");
         if (byIdx == -1) {
-            throw new AmadeusException("Ten thousand apologies, a deadline needs a '/by'.",
+            throw new AmadeusException("Ten thousand apologies, a deadline needs a '/by', sir.",
                     "Please use: deadline <description> /by <date>");
         }
 
@@ -119,11 +119,11 @@ public class Parser {
         String by = arguments.substring(byIdx + "/by".length()).trim();
 
         if (description.isEmpty()) {
-            throw new AmadeusException("A hundred apologies, a deadline needs a description.",
+            throw new AmadeusException("A hundred apologies, a deadline needs a description, sir.",
                     "Please use: deadline <description> /by <date>");
         }
         if (by.isEmpty()) {
-            throw new AmadeusException("A hundred apologies, you didn't say when it's due.",
+            throw new AmadeusException("A hundred apologies, you didn't say when it's due, sir.",
                     "Please use: deadline <description> /by <date>");
         }
         // TaskDateTime.parse throws if the text is not a date it recognises, so a
@@ -147,12 +147,12 @@ public class Parser {
         int toIdx = arguments.indexOf("/to");
 
         if (fromIdx == -1 || toIdx == -1) {
-            throw new AmadeusException("A million apologies, an event needs both '/from' and '/to'.",
+            throw new AmadeusException("A million apologies, an event needs both '/from' and '/to', sir.",
                     "Please use: event <description> /from <start> /to <end>");
         }
         // The three parts are read by position, so they have to be in this order.
         if (toIdx < fromIdx) {
-            throw new AmadeusException("A million apologies, '/from' has to come before '/to'.",
+            throw new AmadeusException("A million apologies, '/from' has to come before '/to', sir.",
                     "Please use: event <description> /from <start> /to <end>");
         }
 
@@ -161,11 +161,11 @@ public class Parser {
         String end = arguments.substring(toIdx + "/to".length()).trim();
 
         if (description.isEmpty()) {
-            throw new AmadeusException("A hundred apologies, an event needs a description.",
+            throw new AmadeusException("A hundred apologies, an event needs a description, sir.",
                     "Please use: event <description> /from <start> /to <end>");
         }
         if (start.isEmpty() || end.isEmpty()) {
-            throw new AmadeusException("A hundred apologies, an event needs both a start and an end time.",
+            throw new AmadeusException("A hundred apologies, an event needs both a start and an end time, sir.",
                     "Please use: event <description> /from <start> /to <end>");
         }
         Event event = new Event(description, TaskDateTime.parse(start), TaskDateTime.parse(end));
@@ -186,7 +186,7 @@ public class Parser {
     public static LocalDate parseDate(String input) throws AmadeusException {
         String argument = parseArguments(input);
         if (argument.isEmpty()) {
-            throw new AmadeusException("A hundred apologies, please tell me which date.",
+            throw new AmadeusException("A hundred apologies, please tell me which date, sir.",
                     "Please use: on <date>, for example: on 2019-12-02");
         }
         return TaskDateTime.parse(argument).getDate();
@@ -206,7 +206,7 @@ public class Parser {
     public static String parseKeyword(String input) throws AmadeusException {
         String keyword = parseArguments(input);
         if (keyword.isEmpty()) {
-            throw new AmadeusException("A hundred apologies, please tell me what to search for.",
+            throw new AmadeusException("A hundred apologies, please tell me what to search for, sir.",
                     "Please use: find <keyword>");
         }
         return keyword;
@@ -225,7 +225,7 @@ public class Parser {
     public static int parseTaskIndex(String input, int taskCount) throws AmadeusException {
         String argument = parseArguments(input);
         if (argument.isEmpty()) {
-            throw new AmadeusException("A hundred apologies, please tell me which task number.");
+            throw new AmadeusException("A hundred apologies, please tell me which task number, sir.");
         }
 
         int taskNumber;
@@ -234,14 +234,14 @@ public class Parser {
         } catch (NumberFormatException e) {
             // parseInt reports bad input by throwing rather than by returning a
             // value, so this has to be caught rather than tested with an if.
-            throw new AmadeusException("Hundreds of apologies, '" + argument + "' is not a task number.");
+            throw new AmadeusException("Hundreds of apologies, '" + argument + "' is not a task number, sir.");
         }
 
         if (taskCount == 0) {
-            throw new AmadeusException("Thousands of apologies, your list is empty.");
+            throw new AmadeusException("Thousands of apologies, your list is empty, sir.");
         }
         if (taskNumber < 1 || taskNumber > taskCount) {
-            throw new AmadeusException("Thousands of apologies, I only have " + taskCount + " task(s).");
+            throw new AmadeusException("Thousands of apologies, I only have " + taskCount + " task(s), sir.");
         }
         return taskNumber - 1;
     }
