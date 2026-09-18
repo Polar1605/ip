@@ -13,7 +13,6 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 
 /**
  * One message in the conversation: an avatar beside the text that was said.
@@ -25,11 +24,13 @@ import javafx.scene.layout.Priority;
  * <p>
  * The conversation is not between two people: it is between a person and a program, and
  * the three factory methods below give each kind of message a shape that matches what it
- * is. What the user typed is a short, solid gold bubble pushed to the right; what the
- * chatbot replied is a white textbox of its own, outlined rather than filled, spanning
- * the width because replies are the long ones; an error is that same white-vs-filled
- * distinction inverted - a red outline around a red-tinted fill - so a mistyped command
- * is obvious before it has been read.
+ * is. Every message sizes itself to its own content, the way an ordinary chat app's
+ * bubbles do, growing only as wide as it needs to - up to a shared cap, so even the
+ * longest reply leaves a margin rather than touching the window's edge. What the user
+ * typed is a short, solid gold bubble pushed to the right; what the chatbot replied is a
+ * white textbox of its own, outlined rather than filled; an error is that same
+ * white-vs-filled distinction inverted - a red outline around a red-tinted fill - so a
+ * mistyped command is obvious before it has been read.
  * <p>
  * The constructor is private because those three methods say something it cannot: which
  * kind of message this is.
@@ -37,11 +38,12 @@ import javafx.scene.layout.Priority;
 public class DialogBox extends HBox {
 
     /**
-     * How much of the window's width the user's bubble may take before it wraps.
-     * Short of the full width so that a bubble always reads as one side of a
-     * conversation rather than as another full-width paragraph.
+     * How much of the row's width any message may take before it wraps.
+     * Shared by both sides, short of the full width, so a message always reads as one
+     * side of a conversation rather than as a full-width paragraph - even the longest
+     * reply from the chatbot leaves a margin instead of touching the window's edge.
      */
-    private static final double USER_MAX_WIDTH_FRACTION = 0.82;
+    private static final double MAX_WIDTH_FRACTION = 0.82;
 
     /**
      * Warning sign (U+26A0) shown at the start of an error, and the gap after it.
@@ -100,23 +102,21 @@ public class DialogBox extends HBox {
     public static DialogBox getUserDialog(String text, Image img) {
         DialogBox box = new DialogBox(text, img, "message-user");
         box.setAlignment(Pos.TOP_RIGHT);
-        // Binding rather than setting a fixed number keeps the limit correct while the
-        // window is being resized, which a fixed number could not do.
-        box.dialog.maxWidthProperty().bind(box.widthProperty().multiply(USER_MAX_WIDTH_FRACTION));
+        bindMaxWidth(box);
         box.flip();
         return box;
     }
 
     /**
      * Returns a dialog box for something the chatbot said: a white textbox outlined in
-     * the accent colour, spanning the width, with the avatar leading it.
+     * the accent colour, sized to its content, with the avatar leading it.
      *
      * @param text what the chatbot replied.
      * @param img the chatbot's avatar.
      * @return a dialog box ready to be added to the conversation.
      */
     public static DialogBox getAmadeusDialog(String text, Image img) {
-        return spanningBox(text, img, "message-bot");
+        return contentSizedBox(text, img, "message-bot");
     }
 
     /**
@@ -129,27 +129,30 @@ public class DialogBox extends HBox {
      * @return a dialog box ready to be added to the conversation.
      */
     public static DialogBox getErrorDialog(String text, Image img) {
-        return spanningBox(ERROR_PREFIX + text, img, "message-error");
+        return contentSizedBox(ERROR_PREFIX + text, img, "message-error");
     }
 
     /**
-     * Returns a left-aligned box, avatar first, whose label is allowed to grow into the
-     * whole remaining width.
-     * <p>
+     * Returns a left-aligned box, avatar first, sized to its own content.
      * Both kinds of reply from the chatbot want exactly this, so it is written once here.
-     * <p>
-     * Both grow calls are needed: {@code setHgrow} offers the label the leftover width,
-     * and lifting {@code maxWidth} lets it actually take it - a label will not grow past
-     * the width of its own text otherwise. Without the pair, a short error would be a stub
-     * of red floating next to the avatar instead of a box spanning the row, and would
-     * change width from one message to the next.
      */
-    private static DialogBox spanningBox(String text, Image img, String styleClass) {
+    private static DialogBox contentSizedBox(String text, Image img, String styleClass) {
         DialogBox box = new DialogBox(text, img, styleClass);
         box.setAlignment(Pos.TOP_LEFT);
-        HBox.setHgrow(box.dialog, Priority.ALWAYS);
-        box.dialog.setMaxWidth(Double.MAX_VALUE);
+        bindMaxWidth(box);
         return box;
+    }
+
+    /**
+     * Caps the label's width at {@link #MAX_WIDTH_FRACTION} of the row's own width, so a
+     * short message shrinks to fit its text - the way a real chat bubble does - while a
+     * long one still wraps instead of running off the edge.
+     * <p>
+     * Binding rather than setting a fixed number keeps the limit correct while the window
+     * is being resized, which a fixed number could not do.
+     */
+    private static void bindMaxWidth(DialogBox box) {
+        box.dialog.maxWidthProperty().bind(box.widthProperty().multiply(MAX_WIDTH_FRACTION));
     }
 
     /** Reverses the order of the avatar and the text, so the avatar ends up on the right. */
