@@ -1,3 +1,7 @@
+---
+title: Amadeus User Guide
+---
+
 # Amadeus User Guide
 
 Amadeus is a desktop chatbot that keeps track of your todos, deadlines, and events. It's
