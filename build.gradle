@@ -15,6 +15,18 @@ java {
     targetCompatibility = JavaVersion.VERSION_25
 }
 
+// Without this, javac reads source files in whatever encoding the machine happens to
+// default to - UTF-8 on the Linux CI runner, but Cp1252 on a typical Windows install -
+// so a file containing any non-ASCII character compiles to different text on different
+// machines. Saying UTF-8 explicitly makes the build produce the same result everywhere.
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
+}
+
 repositories {
     mavenCentral()
 }

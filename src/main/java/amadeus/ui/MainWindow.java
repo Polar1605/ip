@@ -8,7 +8,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
@@ -19,8 +18,11 @@ import javafx.util.Duration;
  * and drops them into the {@code @FXML} fields below, matching each field to the
  * {@code fx:id} of the same name. This class only reacts to what the user does with
  * them, and asks {@link Amadeus} what to reply.
+ * <p>
+ * It is a plain class rather than a subclass of a layout: the FXML names it as its
+ * controller, which does not require the two to be the same object.
  */
-public class MainWindow extends AnchorPane {
+public class MainWindow {
 
     /** How long the goodbye stays on screen before the window closes. */
     private static final Duration EXIT_DELAY = Duration.seconds(1.5);
@@ -60,19 +62,9 @@ public class MainWindow extends AnchorPane {
      */
     public void setAmadeus(Amadeus amadeus) {
         this.amadeus = amadeus;
-        dialogContainer.getChildren().add(
-                DialogBox.getAmadeusDialog(amadeus.getWelcome(), amadeusImage));
-    }
-
-    /**
-     * Loads a bundled image, or returns null if it is missing.
-     * <p>
-     * A missing avatar is not worth stopping the app for: an {@link javafx.scene.image.ImageView}
-     * with no image simply draws nothing, so the conversation still works.
-     */
-    private static Image loadImage(String path) {
-        var stream = MainWindow.class.getResourceAsStream(path);
-        return stream == null ? null : new Image(stream);
+        // A greeting that reports a damaged save file is news the user needs, so it gets
+        // the same amber treatment a failed command would.
+        addReply(amadeus.getWelcome());
     }
 
     /**
@@ -95,9 +87,8 @@ public class MainWindow extends AnchorPane {
         }
 
         String response = amadeus.getResponse(input);
-        dialogContainer.getChildren().addAll(
-                DialogBox.getUserDialog(input, userImage),
-                DialogBox.getAmadeusDialog(response, amadeusImage));
+        dialogContainer.getChildren().add(DialogBox.getUserDialog(input, userImage));
+        addReply(response);
         userInput.clear();
 
         if (amadeus.isExit()) {
@@ -110,5 +101,29 @@ public class MainWindow extends AnchorPane {
             pause.setOnFinished(event -> Platform.exit());
             pause.play();
         }
+    }
+
+    /**
+     * Adds one reply from the chatbot, as an error if that is what it turned out to be.
+     * <p>
+     * The chatbot is asked rather than the text inspected, because whether something went
+     * wrong is known where the failure happened; working it out again here by reading the
+     * words would mean two places having to agree about what an error looks like.
+     */
+    private void addReply(String text) {
+        dialogContainer.getChildren().add(amadeus.isError()
+                ? DialogBox.getErrorDialog(text, amadeusImage)
+                : DialogBox.getAmadeusDialog(text, amadeusImage));
+    }
+
+    /**
+     * Loads a bundled image, or returns null if it is missing.
+     * <p>
+     * A missing avatar is not worth stopping the app for: an {@link javafx.scene.image.ImageView}
+     * with no image simply draws nothing, so the conversation still works.
+     */
+    private static Image loadImage(String path) {
+        var stream = MainWindow.class.getResourceAsStream(path);
+        return stream == null ? null : new Image(stream);
     }
 }
