@@ -1,5 +1,6 @@
 ---
 title: Amadeus User Guide
+permalink: /
 ---
 
 # Amadeus User Guide
