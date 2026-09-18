@@ -51,6 +51,21 @@ public class Amadeus {
     private boolean isExit = false;
 
     /**
+     * Whether the last thing the chatbot was asked to do reported a problem.
+     * <p>
+     * Set by {@link #getResponse(String)} for a command that failed, and by the
+     * constructor for a save file that could not be read, so that both reach the user
+     * the same way. The window reads it straight after asking for the text, and shows
+     * that text as an error instead of as an ordinary reply.
+     * <p>
+     * A flag beside the text is the smaller of the two obvious designs: the alternative
+     * is to return the text and the flag together in one object (a record), which is
+     * tidier in that it cannot be read out of order, but would change the signature
+     * every caller uses - including the console loop, which has no use for the flag.
+     */
+    private boolean isError = false;
+
+    /**
      * Creates a chatbot whose task list is loaded from the save file.
      * <p>
      * A missing or damaged file is not fatal: the session simply starts with whatever
@@ -63,6 +78,9 @@ public class Amadeus {
         try {
             loaded = storage.load();
             loadMessages.addAll(storage.getLoadWarnings());
+            // Skipped lines mean tasks the user saved but will not get back, which is
+            // worth the same attention as a mistyped command rather than less.
+            isError = !storage.getLoadWarnings().isEmpty();
             if (!loaded.isEmpty()) {
                 loadMessages.add("I've loaded " + loaded.size() + " task(s) from your last session.");
             }
@@ -70,6 +88,7 @@ public class Amadeus {
             // The list could not be read at all, so the session starts empty rather
             // than stopping; the user is told why.
             loadMessages.add(e.getMessage());
+            isError = true;
         }
         this.tasks = loaded;
     }
@@ -127,6 +146,20 @@ public class Amadeus {
     }
 
     /**
+     * Returns true if the text just handed back reported a problem rather than a result.
+     * <p>
+     * Asked by the window immediately after {@link #getResponse(String)} or
+     * {@link #getWelcome()}, so that a mistyped command is shown in a format that
+     * catches the eye instead of looking like every other reply. The console interface
+     * ignores it, because a console has no formatting to switch between.
+     *
+     * @return true if the last reply was about something going wrong.
+     */
+    public boolean isError() {
+        return isError;
+    }
+
+    /**
      * Runs one command and returns what the chatbot has to say about it.
      * <p>
      * This is the single entry point for both user interfaces. Every way the input can
@@ -138,6 +171,9 @@ public class Amadeus {
      */
     public String getResponse(String input) {
         List<String> lines = new ArrayList<>();
+        // Cleared for every command, so the flag always describes this reply and never
+        // a previous one.
+        isError = false;
 
         // One try/catch around the whole command covers every way the input can be
         // wrong, so each branch below can assume its input is valid.
@@ -189,6 +225,7 @@ public class Amadeus {
             // The exception message is written to be read by the user, so it can
             // simply become the reply.
             lines.add(e.getMessage());
+            isError = true;
         }
 
         return String.join("\n", lines);
@@ -388,6 +425,9 @@ public class Amadeus {
             storage.save(tasks);
         } catch (AmadeusException e) {
             lines.add(e.getMessage());
+            // The change itself worked, but the user needs to know it will not survive
+            // the session, so the whole reply is flagged rather than passing quietly.
+            isError = true;
         }
     }
 }
