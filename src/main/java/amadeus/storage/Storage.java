@@ -108,7 +108,7 @@ public class Storage {
         }
         if (Files.isDirectory(filePath)) {
             throw new AmadeusException("A thousand apologies, " + filePath
-                    + " is a folder, so I cannot read your tasks from it.");
+                    + " is a folder, so I cannot read your tasks from it, sir.");
         }
 
         List<String> lines;
@@ -117,7 +117,7 @@ public class Storage {
         } catch (IOException e) {
             // Covers an unreadable file as well as one that is not valid UTF-8 text.
             throw new AmadeusException("A thousand apologies, I could not read " + filePath
-                    + " (" + describe(e) + ").",
+                    + " (" + describe(e) + "), sir.",
                     "Starting with an empty list instead.");
         }
 
@@ -184,7 +184,7 @@ public class Storage {
                 break;
 
             default:
-                throw new AmadeusException("'" + type + "' is not a task type I recognise");
+                throw new AmadeusException("'" + type + "' is not a task type I recognise, sir");
         }
 
         // The tag field, when present, is always the one field past the type's own
@@ -221,7 +221,7 @@ public class Storage {
     private static void requireFieldCount(String[] fields, int baseCount) throws AmadeusException {
         if (fields.length != baseCount && fields.length != baseCount + 1) {
             throw new AmadeusException("expected " + baseCount + " or " + (baseCount + 1)
-                    + " fields but found " + fields.length);
+                    + " fields but found " + fields.length + ", sir");
         }
     }
 
@@ -250,14 +250,14 @@ public class Storage {
         try {
             return TaskDateTime.parse(text);
         } catch (AmadeusException e) {
-            throw new AmadeusException("the " + fieldName + " '" + text + "' is not a date I can read");
+            throw new AmadeusException("the " + fieldName + " '" + text + "' is not a date I can read, sir");
         }
     }
 
     /** @throws AmadeusException if the field is blank */
     private static String requireNonEmpty(String field, String fieldName) throws AmadeusException {
         if (field.isEmpty()) {
-            throw new AmadeusException("the " + fieldName + " is empty");
+            throw new AmadeusException("the " + fieldName + " is empty, sir");
         }
         return field;
     }
@@ -271,7 +271,8 @@ public class Storage {
         if (statusField.equals("1")) {
             task.markAsDone();
         } else if (!statusField.equals("0")) {
-            throw new AmadeusException("'" + statusField + "' is not a done/not-done flag (expected 1 or 0)");
+            throw new AmadeusException(
+                    "'" + statusField + "' is not a done/not-done flag (expected 1 or 0), sir");
         }
     }
 
@@ -301,7 +302,7 @@ public class Storage {
             Files.write(filePath, lines, StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new AmadeusException("A thousand apologies, I could not save to " + filePath
-                    + " (" + describe(e) + ").");
+                    + " (" + describe(e) + "), sir.");
         }
     }
 
@@ -337,7 +338,7 @@ public class Storage {
                     + FIELD_SEPARATOR + event.getEnd().toStorageString() + tagsField;
         } else {
             throw new AmadeusException("A thousand apologies, I do not know how to save a "
-                    + task.getClass().getSimpleName() + ".");
+                    + task.getClass().getSimpleName() + ", sir.");
         }
     }
 }
