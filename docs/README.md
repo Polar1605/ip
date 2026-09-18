@@ -128,6 +128,9 @@ Here are the matching tasks in your list, sir:
 1.[D][ ] submit report (by: Oct 15 2019)
 ```
 
+> `find` only searches descriptions, not dates - `find 2019-10-15` won't find a deadline
+> due that day. Use `on` for that instead.
+
 ### Viewing tasks on a date: `on`
 
 Shows every deadline or event that falls on the given day. Todos, having no date, never
