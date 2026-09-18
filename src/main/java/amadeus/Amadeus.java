@@ -129,7 +129,7 @@ public class Amadeus {
      */
     public String getWelcome() {
         List<String> lines = new ArrayList<>();
-        lines.add("Hello, I'm Amadeus.");
+        lines.add("Hello, I'm Amadeus, sir.");
         lines.add("Sir, what do you need assistance with?");
         lines.addAll(loadMessages);
         return String.join("\n", lines);
@@ -183,11 +183,11 @@ public class Amadeus {
             switch (commandWord) {
                 case "bye":
                     isExit = true;
-                    lines.add("Buh bye ");
+                    lines.add("Buh bye, sir");
                     break;
 
                 case "list":
-                    lines.add("Here are the " + tasks.size() + " task(s) in your list:");
+                    lines.add("Here are the " + tasks.size() + " task(s) in your list, sir:");
                     addTaskList(lines, tasks);
                     break;
 
@@ -219,7 +219,7 @@ public class Amadeus {
 
                 default:
                     throw new AmadeusException("A million apologies, I don't know what '"
-                            + commandWord + "' means.");
+                            + commandWord + "' means, sir.");
             }
         } catch (AmadeusException e) {
             // The exception message is written to be read by the user, so it can
@@ -240,7 +240,7 @@ public class Amadeus {
     private List<String> handleOn(String input) throws AmadeusException {
         LocalDate date = Parser.parseDate(input);
         return describeMatches(task -> task.occursOn(date),
-                count -> "Here are the " + count + " task(s) on " + TaskDateTime.format(date) + ":",
+                count -> "Here are the " + count + " task(s) on " + TaskDateTime.format(date) + ", sir:",
                 "Nothing is happening on " + TaskDateTime.format(date) + ", sir.");
     }
 
@@ -253,7 +253,7 @@ public class Amadeus {
     private List<String> handleFind(String input) throws AmadeusException {
         String keyword = Parser.parseKeyword(input);
         return describeMatches(task -> task.descriptionContains(keyword),
-                count -> "Here are the matching tasks in your list:",
+                count -> "Here are the matching tasks in your list, sir:",
                 "I found no tasks matching '" + keyword + "', sir.");
     }
 
@@ -297,7 +297,7 @@ public class Amadeus {
         task.markAsDone();
         List<String> lines = new ArrayList<>();
         save(lines);
-        lines.add("Fantastic! I've marked this task as done:");
+        lines.add("Fantastic! I've marked this task as done, sir:");
         addTask(lines, task);
         return lines;
     }
@@ -312,7 +312,7 @@ public class Amadeus {
         task.markAsNotDone();
         List<String> lines = new ArrayList<>();
         save(lines);
-        lines.add("OK, it has been marked as undone:");
+        lines.add("OK, it has been marked as undone, sir:");
         addTask(lines, task);
         return lines;
     }
@@ -327,9 +327,9 @@ public class Amadeus {
         tasks.remove(removed);
         List<String> lines = new ArrayList<>();
         save(lines);
-        lines.add("Fantastic! I've removed this task:");
+        lines.add("Fantastic! I've removed this task, sir:");
         addTask(lines, removed);
-        lines.add("Now you have " + tasks.size() + " task(s) in your list");
+        lines.add("Now you have " + tasks.size() + " task(s) in your list, sir");
         return lines;
     }
 
@@ -364,7 +364,7 @@ public class Amadeus {
      */
     private List<String> handleNewTask(String commandWord, String input) throws AmadeusException {
         if (tasks.size() == MAX_TASKS) {
-            throw new AmadeusException("My list is full, a thousand apologies.");
+            throw new AmadeusException("My list is full, a thousand apologies, sir.");
         }
 
         // The parser builds the right kind of Task and throws if the line is
@@ -388,9 +388,9 @@ public class Amadeus {
         assert tasks.size() <= MAX_TASKS : "task list grew past MAX_TASKS";
         List<String> lines = new ArrayList<>();
         save(lines);
-        lines.add("Got it added:");
+        lines.add("Got it added, sir:");
         addTask(lines, task);
-        lines.add("Now you have " + tasks.size() + " task(s) in your list");
+        lines.add("Now you have " + tasks.size() + " task(s) in your list, sir");
         return lines;
     }
 
