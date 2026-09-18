@@ -8,17 +8,13 @@ replies with the same clipped, formal courtesy of a very organised personal assi
 
 ## Quick start
 
-1. Make sure you have **JDK 25** installed.
+1. Install **Java 25**. Run `java -version` in a terminal to check yours.
 1. Clone or download this repository, and open a terminal in its folder.
-1. Build and run Amadeus:
-   ```
-   ./gradlew run
-   ```
-   (On Windows, use `gradlew.bat run` instead.)
-1. A window titled "Amadeus" opens. Type a command into the box at the bottom and press
-   Enter (or click Send) - try `list` to see your tasks, or `todo read book` to add one.
-1. Your tasks are saved automatically after every change, in a `data/amadeus.txt` file
-   next to where you ran Amadeus from, and loaded again the next time you start it.
+1. Run `./gradlew run` (on Windows, `gradlew.bat run`).
+1. Type `todo read a book` in the input box, then press Enter or click Send. Type `list`
+   to see your tasks.
+1. Your tasks save automatically in `data/amadeus.txt`, next to where you ran Amadeus
+   from - they'll still be there next time.
 
 ## Features
 
